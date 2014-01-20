@@ -99,7 +99,8 @@ class Grabber():
             self.download(file_url, file_name, md5)
         else:
             if os.path.exists(file_name) and os.path.isfile(file_name):
-                print ("Skipped file is exists!!!")
+                if not self.args.quiet:
+                    print ("Skipped file is exists!!!")
             
           
     def worker(self):
