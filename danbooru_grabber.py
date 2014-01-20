@@ -43,18 +43,18 @@ class Grabber():
 
 
     def download(self, file_url, file_name, md5):
-        org_fn = file_url[22:]
-        if os.path.exists(org_fn) and os.path.isfile(org_fn):
-            local_file_md5 = self.md5sum(org_fn)
+        original_file_name = file_url[22:]
+        if os.path.exists(original_file_name) and os.path.isfile(original_file_name):
+            local_file_md5 = self.md5sum(original_file_name)
             if local_file_md5 == md5:
                 self.download_count += 1
                 if not self.args.quiet:
                     print ("{}/{}".format(self.download_count, self.total_post_count),
                            "({}%)".format(round(self.download_count/(self.total_post_count/100))),
-                           "Rename old file {} to {}".format(org_fn, file_name))
-                os.rename(org_fn, file_name)
+                           "Rename old file {} to {}".format(original_file_name, file_name))
+                os.rename(original_file_name, file_name)
             else:
-                os.remove(org_fn)
+                os.remove(original_file_name)
                 
                 self.download(file_url, file_name, md5)
         if os.path.exists(file_name) and os.path.isfile(file_name):
@@ -69,9 +69,8 @@ class Grabber():
             else:
                 if not self.args.quiet:
                     print ("md5 mismatch!",
-                           "\nLocal file md5:", local_file_md5,
-                           "\nCorrect file md5:", md5,
-                           "\nRestart file download.")
+                           "Correct is: {}, Current is: {}".format(md5, local_file_md5),
+                           "Restart file download.")
                 os.remove(file_name)
                 
                 self.download(file_url, file_name, md5)
