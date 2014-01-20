@@ -27,6 +27,7 @@ class Grabber():
     parser.add_argument("-p", "--password", action="store", help="Set pass for auth")
     parser.add_argument("-i", "--post", action="store_true", help="Post search")
     parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
+    parser.add_argument("-d", "--delete", action="store_true", help="Delete exists blacklisted files")
     parser.add_argument("value", help="Value to search")
     args = parser.parse_args()
     
@@ -95,8 +96,13 @@ class Grabber():
             self.download(file_url, file_name, md5)
         else:
             if os.path.exists(file_name) and os.path.isfile(file_name):
-                if not self.args.quiet:
-                    print ("Skipped file is exists!!!")
+                if self.args.delete:
+                    if not self.args.quiet:
+                        print ("Delete exists blacklisted file: {}".format(file_name))
+                    os.remove(file_name)
+                else:
+                    if not self.args.quiet:
+                        print ("Skipped file is exists!!!")
             
           
     def worker(self):
