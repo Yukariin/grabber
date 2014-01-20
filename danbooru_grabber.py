@@ -27,7 +27,7 @@ class Grabber():
     parser.add_argument("-p", "--password", action="store", help="Set pass for auth")
     parser.add_argument("-i", "--post", action="store_true", help="Post search")
     parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
-    parser.add_argument("-d", "--delete", action="store_true", help="Delete exists blacklisted files")
+    parser.add_argument("-d", "--delete", action="store_true", help="Delete existing blacklisted files")
     parser.add_argument("value", help="Value to search")
     args = parser.parse_args()
     
@@ -51,6 +51,7 @@ class Grabber():
                            "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                            "Rename old file {} to {}".format(original_file_name, file_name))
                 os.rename(original_file_name, file_name)
+                self.downloaded_count += 1
             else:
                 os.remove(original_file_name)
                 
@@ -74,7 +75,6 @@ class Grabber():
                 self.download(file_url, file_name, md5)
         else:
             self.download_count += 1
-            self.downloaded_count += 1
             print ("{}/{}".format(self.download_count, self.total_post_count),
                    "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                    "downloading", file_name)
@@ -85,6 +85,7 @@ class Grabber():
                     if chunk:
                         f.write(chunk)
                         f.flush()
+            self.downloaded_count += 1
   
     
     def parse(self, post):
@@ -102,7 +103,7 @@ class Grabber():
                     os.remove(file_name)
                 else:
                     if not self.args.quiet:
-                        print ("Skipped file is exists!!!")
+                        print ("Blacklisted file is exists!!!")
             
           
     def worker(self):
