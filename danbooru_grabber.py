@@ -25,7 +25,9 @@ class Grabber():
     parser = argparse.ArgumentParser(description='Grabber')
     parser.add_argument("-n", "--nick", action="store", help="Set nick for auth")
     parser.add_argument("-p", "--password", action="store", help="Set pass for auth")
+    parser.add_argument("-t", "--tag", action="store_true", help="Tag search")
     parser.add_argument("-i", "--post", action="store_true", help="Post search")
+    parser.add_argument("-l", "--pool", action="store_true", help="Pool search")
     parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
     parser.add_argument("-d", "--delete", action="store_true", help="Delete existing blacklisted files")
     parser.add_argument("value", help="Value to search")
@@ -113,15 +115,15 @@ class Grabber():
             q.task_done()
             
   
-    def search(self, value, method = "tag"):
-        if method is "tag":
+    def search(self, value):
+        if self.args.tag:
             self.tags = value.replace(" ", "+")
             url = "{}/posts.json?tags={}&page={}&limit={}".format(self.danbooru_url, self.tags, self.page, self.limit)
             if not self.args.quiet:
                 print ("Please wait, loading page", self.page)
-        if method is "post":
+        if self.args.post:
             url = "{}/posts.json?tags=id:{}&page={}&limit={}".format(self.danbooru_url, value, self.page, self.limit)
-        if method is "pool":
+        if self.args.pool:
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, value, self.page, self.limit)
             
         if self.args.nick and self.args.password:
@@ -144,14 +146,14 @@ class Grabber():
             self.total_post_count += post_counter
             self.total_result += result
             
-            if method is "tag":
+            if self.args.tag:
                 for tag in self.tags.split("+"):
                     if tag in self.blacklist:
                         self.blacklist.remove(tag)
                 print ("Before:", self.total_post_count)
             for post in self.total_result:
                 post["is_blacklisted"] = False
-                if method is "tag":
+                if self.args.tag:
                     for tag in self.blacklist:
                         if tag in post["tag_string"] and not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
@@ -162,10 +164,14 @@ class Grabber():
             if not os.path.exists(pic_dir) and not os.path.isdir(pic_dir):
                 os.mkdir(pic_dir)
             os.chdir(pic_dir)
-            if self.tags:
-                if not os.path.exists(self.tags) and not os.path.isdir(self.tags):
-                    os.mkdir(self.tags)
-                os.chdir(self.tags)
+            if not self.args.post:
+                if self.args.tag:
+                    folder_name = self.tags
+                if self.args.pool:
+                    folder_name = "pool:{}".format(value)
+                if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
+                    os.mkdir(folder_name)
+                os.chdir(folder_name)
             
             if self.args.quiet:
                 return self.total_result
@@ -180,20 +186,19 @@ class Grabber():
 g = Grabber()
 q = Queue()
 
+if g.args.tag:
+    print ("Search tag:", g.args.value)
 if g.args.post:
     print ("Search post with id:", g.args.value)
-    for item in g.search(g.args.value, method = "post"):
-        g.parse(item)
-else:
-    print ("Search tag:", g.args.value)
-    for item in g.search(g.args.value):
-        q.put(item)
+if g.args.pool:
+    print ("Search pool with name/id:", g.args.value)
+for item in g.search(g.args.value):
+    q.put(item)
         
-    for i in range(g.threads):
-        t = Thread(target=g.worker)
-        t.daemon = True
-        t.start()
+for i in range(g.threads):
+    t = Thread(target=g.worker)
+    t.daemon = True
+    t.start()
         
-    q.join()
-    print ("Done! TTL: {}, OK: {}, SKP: {}".format(g.total_post_count, g.downloaded_count, g.skipped_count))
- 
+q.join()
+print ("Done! TTL: {}, OK: {}, SKP: {}".format(g.total_post_count, g.downloaded_count, g.skipped_count))
