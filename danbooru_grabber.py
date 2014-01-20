@@ -13,9 +13,6 @@ class Grabber():
     limit = 200
     threads = 10
     
-    login = ""
-    password = ""
-
     blacklist = "scat comic".split()
 
     tags = ""
@@ -26,10 +23,10 @@ class Grabber():
     skipped_count = 0
     
     parser = argparse.ArgumentParser(description='Grabber')
-    parser.add_argument("-p", "--post", action="store_true",
-                        help="Post search")
-    parser.add_argument("-q", "--quiet", action="store_true",
-                        help="Quiet mode")
+    parser.add_argument("-n", "--nick", action="store", help="Set nick for auth")
+    parser.add_argument("-p", "--password", action="store", help="Set pass for auth")
+    parser.add_argument("-i", "--post", action="store_true", help="Post search")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Quiet mode")
     parser.add_argument("value", help="Value to search")
     args = parser.parse_args()
     
@@ -120,8 +117,8 @@ class Grabber():
         if method is "pool":
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, value, self.page, self.limit)
             
-        if self.login and self.password:
-            response = requests.get(url, auth = (self.login, self.password))
+        if self.args.nick and self.args.password:
+            response = requests.get(url, auth = (self.args.nick, self.args.password))
         else:
             response = requests.get(url)
         result = response.json()
