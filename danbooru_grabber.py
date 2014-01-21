@@ -117,7 +117,7 @@ class Grabber():
   
     def search(self, value):
         if self.args.tag:
-            self.tags = value.replace(" ", "+")
+            self.tags = value.strip().replace(" ", "+")
             url = "{}/posts.json?tags={}&page={}&limit={}".format(self.danbooru_url, self.tags, self.page, self.limit)
             if not self.args.quiet:
                 print ("Please wait, loading page", self.page)
