@@ -13,7 +13,7 @@ class Grabber():
     limit = 200
     threads = 10
     
-    blacklist = "scat comic".split()
+    blacklist = "scat comic hard_translated".split()
 
     tags = ""
     total_result = []
