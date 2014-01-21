@@ -116,14 +116,21 @@ class Grabber():
             
   
     def search(self, value):
+        value = value.strip()
         if self.args.tag:
-            self.tags = value.strip().replace(" ", "+")
+            self.tags = value.replace(" ", "+")
+            if self.page is 1:
+                print ("Search tag:", self.tags)
             url = "{}/posts.json?tags={}&page={}&limit={}".format(self.danbooru_url, self.tags, self.page, self.limit)
             if not self.args.quiet:
                 print ("Please wait, loading page", self.page)
         if self.args.post:
+            if self.page is 1:
+                print ("Search post with id:", value)
             url = "{}/posts.json?tags=id:{}&page={}&limit={}".format(self.danbooru_url, value, self.page, self.limit)
         if self.args.pool:
+            if self.page is 1:
+                print ("Search pool with name/id:", value)
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, value, self.page, self.limit)
             
         if self.args.nick and self.args.password:
@@ -186,12 +193,6 @@ class Grabber():
 g = Grabber()
 q = Queue()
 
-if g.args.tag:
-    print ("Search tag:", g.args.value)
-if g.args.post:
-    print ("Search post with id:", g.args.value)
-if g.args.pool:
-    print ("Search pool with name/id:", g.args.value)
 for item in g.search(g.args.value):
     q.put(item)
         
