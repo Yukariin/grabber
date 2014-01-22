@@ -175,6 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--post", help="search post (by danbooru post id)")
     parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)")
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
+    parser.add_argument("-u", "--update", action="store_true", help="update downloaded collection")
     #parser.add_argument("-d", "--delete", action="store_true", help="delete existing blacklisted files")
 
     args = parser.parse_args()
@@ -194,3 +195,11 @@ if __name__ == "__main__":
        start(args.post, "post")
     if args.pool:
        start(args.pool, "pool")
+    if args.update:
+        args.quiet = True
+        pic_dir = os.getenv("HOME") + "/Pictures"
+        folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + "/" + name)]
+        print ("Updating!")
+        for name in folder_list:
+            print ("--------------------------------")
+            start(name, "tag")
