@@ -84,7 +84,7 @@ class Grabber():
             self.queue.task_done()
             
     def prepare(self):
-        def blacklisting():
+        if self.blacklist:
             if self.search_method == "tag":
                 for tag in self.query.split("+"):
                     if tag in self.blacklist:
@@ -96,18 +96,6 @@ class Grabber():
                         if tag in post["tag_string"] and not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
-            
-        def folder():
-            if self.search_method == "tag":
-                folder_name = self.query
-            if self.search_method == "pool":
-                folder_name = "pool:{}".format(self.query)
-            if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
-                os.mkdir(folder_name)
-            os.chdir(folder_name)
-        
-        if self.blacklist:
-            blacklisting()
         print ("Total results:", self.total_post_count)
         if not self.quiet:
             a = input("Do you want to continiue?\n")
@@ -119,7 +107,13 @@ class Grabber():
                 os.mkdir(pic_dir)
             os.chdir(pic_dir)
             if self.search_method != "post":
-                folder()
+                if self.search_method == "tag":
+                    folder_name = self.query
+                if self.search_method == "pool":
+                    folder_name = "pool:{}".format(self.query)
+                if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
+                    os.mkdir(folder_name)
+                os.chdir(folder_name)
             self.queue = Queue()
             for item in self.total_result:
                 self.queue.put(item)
@@ -197,9 +191,10 @@ if __name__ == "__main__":
        start(args.pool, "pool")
     if args.update:
         args.quiet = True
-        pic_dir = os.getenv("HOME") + "/Pictures"
-        folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + "/" + name)]
+        pic_dir = os.getenv("HOME") + "/Pictures/"
+        folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
         print ("Updating!")
         for name in folder_list:
             print ("--------------------------------")
             start(name, "tag")
+            
