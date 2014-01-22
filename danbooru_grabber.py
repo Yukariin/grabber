@@ -72,18 +72,15 @@ class Grabber():
         else:
             download(file_url, file_name)
   
-    def parser(self, post):
-        file_url = self.danbooru_url + post["file_url"]
-        file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
-        md5 = post["md5"]
-        
-        if not post["is_blacklisted"]:
-            self.downloader(file_url, file_name, md5)
-            
-    def worker(self):
+    def parser(self):
         while True:
             post = self.queue.get()
-            self.parser(post)
+            file_url = self.danbooru_url + post["file_url"]
+            file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
+            md5 = post["md5"]
+        
+            if not post["is_blacklisted"]:
+                self.downloader(file_url, file_name, md5)
             self.queue.task_done()
             
     def prepare(self):
@@ -128,7 +125,7 @@ class Grabber():
             for item in self.total_result:
                 self.queue.put(item)
             for i in range(self.threads):
-                thread = Thread(target=self.worker)
+                thread = Thread(target=self.parser)
                 thread.daemon = True
                 thread.start()
             self.queue.join()
