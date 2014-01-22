@@ -39,7 +39,7 @@ class Grabber():
                     hasher.update(buf)
             return hasher.hexdigest()
         
-        def download(file_url, file_name):
+        def get(file_url, file_name):
             self.download_count += 1
             if not self.quiet:
                 print ("{}/{}".format(self.download_count, self.total_post_count),
@@ -68,9 +68,9 @@ class Grabber():
                            "Correct is: {}, Current is: {}".format(md5, local_file_md5),
                            "Restart file download.")
                 os.remove(file_name)
-                download(file_url, file_name)
+                get(file_url, file_name)
         else:
-            download(file_url, file_name)
+            get(file_url, file_name)
   
     def parser(self):
         while True:
@@ -147,6 +147,7 @@ class Grabber():
             if self.page == 1:
                 print ("Search pool with name/id:", self.query)
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
+            print ("Please wait, loading page", self.page)
         if self.login and self.password:
             response = requests.get(url, auth = (self.login, self.password))
         else:
@@ -170,11 +171,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Grabber from danbooru imageboard.')
     parser.add_argument("-n", "--nick", help="set nick for auth")
     parser.add_argument("-p", "--password", help="set pass for auth")
-    parser.add_argument("-t", "--tag", help="search tags (standart danbooru format)", type=str, default="")
-    parser.add_argument("-i", "--post", help="search post (by danbooru post id)", type=str, default="")
-    parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)", type=str, default="")
+    parser.add_argument("-t", "--tag", help="search tags (standart danbooru format)")
+    parser.add_argument("-i", "--post", help="search post (by danbooru post id)")
+    parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)")
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-d", "--delete", action="store_true", help="delete existing blacklisted files")
+    #parser.add_argument("-d", "--delete", action="store_true", help="delete existing blacklisted files")
 
     args = parser.parse_args()
 
