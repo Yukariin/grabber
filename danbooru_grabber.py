@@ -85,7 +85,6 @@ class Grabber():
             
     def prepare(self):
         def blacklisting():
-            print ("Before:", self.total_post_count)
             if self.search_method == "tag":
                 for tag in self.query.split("+"):
                     if tag in self.blacklist:
@@ -178,7 +177,6 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)")
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
     parser.add_argument("-u", "--update", action="store_true", help="update downloaded collection")
-    #parser.add_argument("-d", "--delete", action="store_true", help="delete existing blacklisted files")
 
     args = parser.parse_args()
 
