@@ -113,7 +113,10 @@ class Grabber():
         if self.blacklist:
             blacklisting()
         print ("Total results:", self.total_post_count)
-        a = input("Do you want to continiue?\n")
+        if not self.quiet:
+            a = input("Do you want to continiue?\n")
+        else:
+            a = "yes"
         if "n" not in a:
             pic_dir = os.getenv("HOME") + "/Pictures"
             if not os.path.exists(pic_dir) and not os.path.isdir(pic_dir):
