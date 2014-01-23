@@ -33,10 +33,11 @@ class Grabber():
         self.downloaded_count = 0
         self.skipped_count = 0
         self.quiet = False
-        if "pool:" in self.query and self.search_method != "pool":
+        
+        if self.query.startswith("pool:") and self.search_method != "pool":
             self.search_method = "pool"
             self.query = self.query.replace("pool:", "")
-        if "id:" in self.query and self.search_method != "post":
+        if self.query.startswith("id:") and self.search_method != "post":
             self.search_method = "post"
             self.query = self.query.replace("id:", "")
         
@@ -122,6 +123,7 @@ class Grabber():
                 if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
+                
             self.queue = Queue()
             for item in self.total_result:
                 self.queue.put(item)
@@ -151,12 +153,14 @@ class Grabber():
             if not self.quiet:
                 print ("Please wait, loading page", self.page)
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
+        
         if self.login is not None and self.password is not None:
             response = requests.get(url, auth = (self.login, self.password))
         else:
             response = requests.get(url)
         result = response.json()
         post_count = len(result)
+        
         if post_count == self.post_limit:
             self.total_result += result
             self.page += 1
