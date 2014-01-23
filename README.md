@@ -17,9 +17,9 @@ search and download images from pool with *"123"* id
     
 search and download image with *"12345"* id
 
-For more options/query see script help, [donmai.us API][1] docs and [cheatsheet][2]
+For more options/query see script help, donmai.us [API docs][1] and [cheatsheet][2]
 
-[1]:http://donmai.us/wiki_pages/43568
-[2]:http://donmai.us/wiki_pages/43049
-[3]:http://donmai.us
+[1]:http://danbooru.donmai.us/wiki_pages/43568
+[2]:http://danbooru.donmai.us/wiki_pages/43049
+[3]:http://danbooru.donmai.us
     
