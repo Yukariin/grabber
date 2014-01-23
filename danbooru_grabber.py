@@ -141,8 +141,9 @@ class Grabber():
         if self.search_method == "tag":
             if self.page == 1:
                 print ("Search tag:", self.query)
-            if not self.quiet:
-                print ("Please wait, loading page", self.page)
+            else:
+                if not self.quiet:
+                    print ("Please wait, loading page", self.page)
             url = "{}/posts.json?tags={}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
         if self.search_method == "post":
             print ("Search post with id:", self.query)
@@ -150,8 +151,9 @@ class Grabber():
         if self.search_method == "pool":
             if self.page == 1:
                 print ("Search pool with name/id:", self.query)
-            if not self.quiet:
-                print ("Please wait, loading page", self.page)
+            else:
+                if not self.quiet:
+                    print ("Please wait, loading page", self.page)
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
         
         if self.login is not None and self.password is not None:
