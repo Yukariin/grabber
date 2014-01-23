@@ -21,8 +21,8 @@ class Grabber():
         self.danbooru_url = "http://donmai.us"
         self.query = query.strip().replace(" ", "+")
         self.search_method = search_method
-        self.login = ""
-        self.password = ""
+        self.login = None
+        self.password = None
         self.page = 1
         self.post_limit = 200
         self.threads = 10
@@ -151,7 +151,7 @@ class Grabber():
             if not self.quiet:
                 print ("Please wait, loading page", self.page)
             url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
-        if self.login and self.password:
+        if self.login is not None and self.password is not None:
             response = requests.get(url, auth = (self.login, self.password))
         else:
             response = requests.get(url)
