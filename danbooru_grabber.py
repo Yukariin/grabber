@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import argparse, sys, os, hashlib, requests
+import argparse
+import sys
+import os
+import hashlib
 from functools import partial
 from queue import Queue
 from threading import Thread
 
+try:
+    import requests
+except ImportError:
+    print ("Requests lib not found!")
+
 
 class Grabber():
-    def __init__(self, query, search_method):
+    def __init__(self, query, search_method="tag"):
         self.danbooru_url = "http://donmai.us"
         self.query = query.strip().replace(" ", "+")
         self.search_method = search_method
@@ -183,7 +191,7 @@ if __name__ == "__main__":
         grabber.search()
 
     if args.tag:
-       start(args.tag, "tag")
+       start(args.tag)
     if args.post:
        start(args.post, "post")
     if args.pool:
@@ -195,5 +203,5 @@ if __name__ == "__main__":
         print ("Updating!")
         for name in folder_list:
             print ("--------------------------------")
-            start(name, "tag")
+            start(name)
             
