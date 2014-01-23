@@ -5,6 +5,7 @@ import argparse
 import sys
 import os
 import hashlib
+
 from functools import partial
 from queue import Queue
 from threading import Thread
@@ -12,7 +13,7 @@ from threading import Thread
 try:
     import requests
 except ImportError:
-    print ("Requests lib not found!")
+    print ("Requests lib was not found!")
     sys.exit()
 
 
@@ -66,16 +67,14 @@ class Grabber():
             local_file_md5 = md5sum(file_name)
             if local_file_md5 == md5:
                 self.download_count += 1
+                self.skipped_count += 1
                 if not self.quiet:
                     print ("{}/{}".format(self.download_count, self.total_post_count),
                            "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                            "md5 match! Skipping download.")
-                self.skipped_count += 1
             else:
                 if not self.quiet:
-                    print ("md5 mismatch!",
-                           "Correct is: {}, Current is: {}".format(md5, local_file_md5),
-                           "Restart file download.")
+                    print ("md5 mismatch! Restart file download.")
                 os.remove(file_name)
                 get(file_url, file_name)
         else:
@@ -105,6 +104,7 @@ class Grabber():
                         if tag in post["tag_string"] and not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
+                            
         print ("Total results:", self.total_post_count)
         if not self.quiet:
             a = input("Do you want to continiue?\n")
@@ -185,7 +185,6 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)")
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
     parser.add_argument("-u", "--update", action="store_true", help="update downloaded collection")
-
     args = parser.parse_args()
 
     def start(query, method="tag"):
@@ -204,10 +203,10 @@ if __name__ == "__main__":
     if args.pool:
        start(args.pool, "pool")
     if args.update:
+        print ("Updating!")
         args.quiet = True
         pic_dir = os.getenv("HOME") + "/Pictures/"
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
-        print ("Updating!")
         for name in folder_list:
             print ("--------------------------------")
             start(name)
