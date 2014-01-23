@@ -2,8 +2,7 @@ Grabber: save images from any donmai.us imageboards locally
 =======
 
 This script help  store images from any [donmai.us][3] imageboards to your hard drive.
-Supports search by tags, pools (name/id) and post (id).
-
+Supports search by tags, pools name/id and post id.
 Usage examples:
 
     danbooru_grabber -t "tag1 tag2"
