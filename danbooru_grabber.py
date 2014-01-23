@@ -41,10 +41,9 @@ class Grabber():
         
         def get(file_url, file_name):
             self.download_count += 1
-            if not self.quiet:
-                print ("{}/{}".format(self.download_count, self.total_post_count),
-                       "({}%)".format(round(self.download_count/(self.total_post_count/100))),
-                       "downloading", file_name)
+            print ("{}/{}".format(self.download_count, self.total_post_count),
+                   "({}%)".format(round(self.download_count/(self.total_post_count/100))),
+                   "downloading", file_name)
             r = requests.get(file_url, stream = True)
             with open(file_name, "wb") as f:
                 for chunk in r.iter_content(chunk_size = 1024):
