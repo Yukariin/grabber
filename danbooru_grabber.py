@@ -16,7 +16,7 @@ except ImportError:
 
 
 class Grabber():
-    def __init__(self, query, search_method="tag"):
+    def __init__(self, query, search_method):
         self.danbooru_url = "http://donmai.us"
         self.query = query.strip().replace(" ", "+")
         self.search_method = search_method
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    def start(query, method):
+    def start(query, method="tag"):
         grabber = Grabber(query, method)
         if args.nick and args.password:
             grabber.login = args.nick
