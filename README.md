@@ -2,6 +2,7 @@ Grabber: save images from any donmai.us imageboards locally
 =======
 
 This script help  store images from any [donmai.us][3] imageboards to your hard drive.
+Supports search by tags, pools (name/id) and post (id).
 
 Usage examples:
 
@@ -17,7 +18,11 @@ search and download images from pool with *"123"* id
     
 search and download image with *"12345"* id
 
-For more options/query see script help, donmai.us [API docs][1] and [cheatsheet][2]
+    danbooru_grabber -n nick -p password -i "12345"
+    
+search tags with using authorisation (by default not using) as user *"nick"* and password *"password"*
+
+For more options/queries see script help, donmai.us [API docs][1] and [cheatsheet][2]
 
 [1]:http://danbooru.donmai.us/wiki_pages/43568
 [2]:http://danbooru.donmai.us/wiki_pages/43049
