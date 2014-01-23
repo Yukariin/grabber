@@ -13,6 +13,7 @@ try:
     import requests
 except ImportError:
     print ("Requests lib not found!")
+    sys.exit()
 
 
 class Grabber():
