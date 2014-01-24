@@ -145,22 +145,22 @@ class Grabber():
             else:
                 if not self.quiet:
                     print ("Please wait, loading page", self.page)
-            url = "{}/posts.json?tags={}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
+            payload = {"tags": self.query, "page": self.page, "limit": self.post_limit}
         if self.search_method == "post":
             print ("Search post with id:", self.query)
-            url = "{}/posts.json?tags=id:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
+            payload = {"tags": "id:" + self.query, "page": self.page, "limit": self.post_limit}
         if self.search_method == "pool":
             if self.page == 1:
                 print ("Search pool with name/id:", self.query)
             else:
                 if not self.quiet:
                     print ("Please wait, loading page", self.page)
-            url = "{}/posts.json?tags=pool:{}&page={}&limit={}".format(self.danbooru_url, self.query, self.page, self.post_limit)
+            payload = {"tags": "pool:" + self.query, "page": self.page, "limit": self.post_limit}
         
         if self.login is not None and self.password is not None:
-            response = requests.get(url, auth = (self.login, self.password))
+            response = requests.get(self.danbooru_url + "/posts.json", params=payload, auth = (self.login, self.password))
         else:
-            response = requests.get(url)
+            response = requests.get(self.danbooru_url + "/posts.json", params=payload)
         result = response.json()
         self.total_result += result
         post_count = len(result)
