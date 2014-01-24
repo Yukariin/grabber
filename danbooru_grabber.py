@@ -7,8 +7,7 @@ import os
 import hashlib
 
 from functools import partial
-from queue import Queue
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 try:
     import requests
@@ -19,7 +18,7 @@ except ImportError:
 
 class Grabber():
     def __init__(self, query, search_method):
-        self.danbooru_url = "http://donmai.us"
+        self.board_url = "http://donmai.us"
         self.query = query.strip().replace(" ", "+")
         self.search_method = search_method
         self.login = None
@@ -81,16 +80,13 @@ class Grabber():
         else:
             get(file_url, file_name)
   
-    def parser(self):
-        while True:
-            post = self.queue.get()
-            file_url = self.danbooru_url + post["file_url"]
-            file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
-            md5 = post["md5"]
+    def parser(self, post):
+        file_url = self.board_url + post["file_url"]
+        file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
+        md5 = post["md5"]
         
-            if not post["is_blacklisted"]:
-                self.downloader(file_url, file_name, md5)
-            self.queue.task_done()
+        if not post["is_blacklisted"]:
+            self.downloader(file_url, file_name, md5)
             
     def prepare(self):
         if self.blacklist:
@@ -125,14 +121,9 @@ class Grabber():
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
                 
-            self.queue = Queue()
-            for item in self.total_result:
-                self.queue.put(item)
-            for i in range(self.threads):
-                thread = Thread(target=self.parser)
-                thread.daemon = True
-                thread.start()
-            self.queue.join()
+            with ThreadPoolExecutor(max_workers=self.threads) as e:
+                for post in self.total_result:
+                    e.submit(self.parser, post)
             print ("Done! TTL: {}, OK: {}, SKP: {}".format(self.total_post_count, self.downloaded_count, self.skipped_count))
         else:
             print ("Exit.")
@@ -158,9 +149,9 @@ class Grabber():
             payload = {"tags": "pool:" + self.query, "page": self.page, "limit": self.post_limit}
         
         if self.login is not None and self.password is not None:
-            response = requests.get(self.danbooru_url + "/posts.json", params=payload, auth = (self.login, self.password))
+            response = requests.get(self.board_url + "/posts.json", params=payload, auth = (self.login, self.password))
         else:
-            response = requests.get(self.danbooru_url + "/posts.json", params=payload)
+            response = requests.get(self.board_url + "/posts.json", params=payload)
         result = response.json()
         self.total_result += result
         post_count = len(result)
