@@ -19,7 +19,7 @@ except ImportError:
 class Grabber():
     def __init__(self, query, search_method):
         self.board_url = "http://donmai.us"
-        self.query = query.strip().replace(" ", "+")
+        self.query = query.strip()
         self.search_method = search_method
         self.login = None
         self.password = None
@@ -91,7 +91,7 @@ class Grabber():
     def prepare(self):
         if self.blacklist:
             if self.search_method == "tag":
-                for tag in self.query.split("+"):
+                for tag in self.query.split():
                     if tag in self.blacklist:
                         self.blacklist.remove(tag)
             for post in self.total_result:
@@ -154,8 +154,8 @@ class Grabber():
             response = requests.get(self.board_url + "/posts.json", params=payload)
         result = response.json()
         self.total_result += result
-        post_count = len(result)
         
+        post_count = len(result)
         if not post_count and not self.total_result:
             print ("Not found.")
             sys.exit()
