@@ -169,14 +169,9 @@ class Grabber():
             print ("Not found.")
             sys.exit()
 
-        if not self.page_limit:
-            if post_count == self.post_limit:
-                self.page += 1
-                return self.search()
-        else:
-            if post_count == self.post_limit and self.page < self.page_limit:
-                self.page += 1
-                return self.search()
+        if any([not self.page_limit and post_count == self.post_limit, post_count == self.post_limit and self.page < self.page_limit]):
+            self.page += 1
+            return self.search()
         self.total_post_count = len(self.total_result)
         self.prepare()
 
