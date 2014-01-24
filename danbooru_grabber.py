@@ -204,7 +204,7 @@ if __name__ == "__main__":
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
         
         for name in folder_list:
-            print ("--------------------------------")
+            print("--------------------------------")
             start(name)
     if not any(vars(args).values()):
         parser.print_help()
