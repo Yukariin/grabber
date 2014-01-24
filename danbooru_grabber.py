@@ -219,6 +219,6 @@ if __name__ == "__main__":
         for name in folder_list:
             print ("--------------------------------")
             start(name)
-    else:
+    if not any(vars(args).values()):
         parser.print_help()
             
