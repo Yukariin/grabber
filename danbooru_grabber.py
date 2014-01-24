@@ -25,6 +25,7 @@ class Grabber():
         self.login = None
         self.password = None
         self.page = 1
+        self.page_limit = 0
         self.post_limit = 200
         self.threads = 10
         self.blacklist = "scat comic hard_translated".split()
@@ -162,19 +163,23 @@ class Grabber():
             response = requests.get(url)
         result = response.json()
         post_count = len(result)
-        
-        if post_count == self.post_limit:
+        if post_count:
             self.total_result += result
-            self.page += 1
-            return self.search()
         if not post_count and not self.total_result:
             print ("Not found.")
             sys.exit()
+
+        if not self.page_limit:
+            if post_count == self.post_limit:
+                self.page += 1
+                return self.search()
         else:
-            self.total_result += result
-            self.total_post_count = len(self.total_result)
-            self.prepare()
-            
+            if post_count == self.post_limit and self.page < self.page_limit:
+                self.page += 1
+                return self.search()
+        self.total_post_count = len(self.total_result)
+        self.prepare()
+
             
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Grabber from danbooru imageboard.')
@@ -182,7 +187,8 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--password", help="set pass for auth")
     parser.add_argument("-t", "--tag", help="search tags (standart danbooru format)")
     parser.add_argument("-i", "--post", help="search post (by danbooru post id)")
-    parser.add_argument("-l", "--pool", help="search pool (by danbooru pool id or name)")
+    parser.add_argument("-o", "--pool", help="search pool (by danbooru pool id or name)")
+    parser.add_argument("-l", "--limit", help="number of downloaded pages", type=int)
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
     parser.add_argument("-u", "--update", action="store_true", help="update downloaded collection")
     args = parser.parse_args()
@@ -192,6 +198,8 @@ if __name__ == "__main__":
         if args.nick and args.password:
             grabber.login = args.nick
             grabber.password = args.password
+        if args.limit:
+            grabber.page_limit = args.limit
         if args.quiet:
             grabber.quiet = True
         grabber.search()
@@ -204,10 +212,13 @@ if __name__ == "__main__":
        start(args.pool, "pool")
     if args.update:
         print ("Updating!")
+        args.limit = 1
         args.quiet = True
         pic_dir = os.getenv("HOME") + "/Pictures/"
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
         for name in folder_list:
             print ("--------------------------------")
             start(name)
+    else:
+        parser.print_help()
             
