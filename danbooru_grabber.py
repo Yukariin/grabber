@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 try:
     import requests
 except ImportError:
-    print ("Requests lib was not found!")
+    print("Requests lib was not found!")
     sys.exit()
 
 
@@ -52,7 +52,7 @@ class Grabber():
         
         def get(file_url, file_name):
             self.download_count += 1
-            print ("{}/{}".format(self.download_count, self.total_post_count),
+            print("{}/{}".format(self.download_count, self.total_post_count),
                    "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                    "downloading", file_name)
             r = requests.get(file_url, stream = True)
@@ -69,12 +69,12 @@ class Grabber():
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
-                    print ("{}/{}".format(self.download_count, self.total_post_count),
+                    print("{}/{}".format(self.download_count, self.total_post_count),
                            "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                            "md5 match! Skipping download.")
             else:
                 if not self.quiet:
-                    print ("md5 mismatch! Restart file download.")
+                    print("md5 mismatch! Restart file download.")
                 os.remove(file_name)
                 get(file_url, file_name)
         else:
@@ -102,7 +102,7 @@ class Grabber():
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
                             
-        print ("Total results:", self.total_post_count)
+        print("Total results:", self.total_post_count)
         if not self.quiet:
             a = input("Do you want to continiue?\n")
         else:
@@ -123,28 +123,28 @@ class Grabber():
                 
             with ThreadPoolExecutor(max_workers=self.threads) as e:
                 e.map(self.parser, self.total_result)
-            print ("Done! TTL: {}, OK: {}, SKP: {}".format(self.total_post_count, self.downloaded_count, self.skipped_count))
+            print("Done! TTL: {}, OK: {}, SKP: {}".format(self.total_post_count, self.downloaded_count, self.skipped_count))
         else:
-            print ("Exit.")
+            print("Exit.")
             sys.exit()
     
     def search(self):
         if self.search_method == "tag":
             if self.page == 1:
-                print ("Search tag:", self.query)
+                print("Search tag:", self.query)
             else:
                 if not self.quiet:
-                    print ("Please wait, loading page", self.page)
+                    print("Please wait, loading page", self.page)
             payload = {"tags": self.query, "page": self.page, "limit": self.post_limit}
         if self.search_method == "post":
-            print ("Search post with id:", self.query)
+            print("Search post with id:", self.query)
             payload = {"tags": "id:" + self.query, "page": self.page, "limit": self.post_limit}
         if self.search_method == "pool":
             if self.page == 1:
-                print ("Search pool with name/id:", self.query)
+                print("Search pool with name/id:", self.query)
             else:
                 if not self.quiet:
-                    print ("Please wait, loading page", self.page)
+                    print("Please wait, loading page", self.page)
             payload = {"tags": "pool:" + self.query, "page": self.page, "limit": self.post_limit}
         
         if self.login is not None and self.password is not None:
@@ -156,7 +156,7 @@ class Grabber():
         
         post_count = len(result)
         if not post_count and not self.total_result:
-            print ("Not found.")
+            print("Not found.")
             sys.exit()
         if (not self.page_limit or self.page < self.page_limit) and \
             post_count == self.post_limit:
@@ -197,11 +197,12 @@ if __name__ == "__main__":
     if args.pool:
        start(args.pool, "pool")
     if args.update:
-        print ("Updating!")
+        print("Updating!")
         args.limit = 1
         args.quiet = True
         pic_dir = os.getenv("HOME") + "/Pictures/"
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
+        
         for name in folder_list:
             print ("--------------------------------")
             start(name)
