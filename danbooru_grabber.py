@@ -162,18 +162,19 @@ class Grabber():
         else:
             response = requests.get(url)
         result = response.json()
+        self.total_result += result
         post_count = len(result)
-        if post_count:
-            self.total_result += result
+        
         if not post_count and not self.total_result:
             print ("Not found.")
             sys.exit()
-
-        if any([not self.page_limit and post_count == self.post_limit, post_count == self.post_limit and self.page < self.page_limit]):
+        if (not self.page_limit or self.page < self.page_limit) and \
+            post_count == self.post_limit:
             self.page += 1
-            return self.search()
-        self.total_post_count = len(self.total_result)
-        self.prepare()
+            self.search()
+        else:
+            self.total_post_count = len(self.total_result)
+            self.prepare()
 
             
 if __name__ == "__main__":
