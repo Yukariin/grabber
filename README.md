@@ -23,7 +23,16 @@ search tags with using authorisation (by default not using) as user *"nick"* and
 
 For more options/queries see script help, donmai.us [API docs][1] and [cheatsheet][2]
 
+
+Requirements    
+-------
+
+Here are no platform specific requirements. But for retrieve json and downloading images will need [requests][4] lib.
+
+
+
 [1]:http://danbooru.donmai.us/wiki_pages/43568
 [2]:http://danbooru.donmai.us/wiki_pages/43049
 [3]:http://danbooru.donmai.us
-    
+[4]:http://docs.python-requests.org/en/latest    
+ 
