@@ -122,8 +122,7 @@ class Grabber():
                 os.chdir(folder_name)
                 
             with ThreadPoolExecutor(max_workers=self.threads) as e:
-                for post in self.total_result:
-                    e.submit(self.parser, post)
+                e.map(self.parser, self.total_result)
             print ("Done! TTL: {}, OK: {}, SKP: {}".format(self.total_post_count, self.downloaded_count, self.skipped_count))
         else:
             print ("Exit.")
