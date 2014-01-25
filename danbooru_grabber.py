@@ -108,10 +108,10 @@ class Grabber():
         else:
             a = "yes"
         if "n" not in a:
-            os.chdir(os.path.expanduser("~"))
-            if not os.path.exists("Pictures") and not os.path.isdir("Pictures"):
-                os.mkdir("Pictures")
-            os.chdir("Pictures")
+            pic_dir = os.path.expanduser("~") + "/Pictures"
+            if not os.path.exists(pic_dir) and not os.path.isdir(pic_dir):
+                os.mkdir(pic_dir)
+            os.chdir(pic_dir)
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         print("Updating!")
         args.limit = 1
         args.quiet = True
-        pic_dir = os.getenv("HOME") + "/Pictures/"
+        pic_dir = os.path.expanduser("~") + "/Pictures/"
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
         
         for name in folder_list:
