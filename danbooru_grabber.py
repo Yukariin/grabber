@@ -130,29 +130,22 @@ class Grabber():
     
     def search(self):
         if self.search_method == "tag":
-            if self.page == 1:
-                print("Search tag:", self.query)
-            else:
-                if not self.quiet:
-                    print("Please wait, loading page", self.page)
-            payload = {"tags": self.query, "page": self.page, "limit": self.post_limit}
+            query = self.query
         if self.search_method == "post":
-            print("Search post with id:", self.query)
-            payload = {"tags": "id:" + self.query, "page": self.page, "limit": self.post_limit}
+            query = "id:" + self.query
         if self.search_method == "pool":
-            if self.page == 1:
-                print("Search pool with name/id:", self.query)
-            else:
-                if not self.quiet:
-                    print("Please wait, loading page", self.page)
-            payload = {"tags": "pool:" + self.query, "page": self.page, "limit": self.post_limit}
+            query = "pool:" + self.query
+        payload = {"tags": query, "page": self.page, "limit": self.post_limit}     
         
+        if (self.search_method == "tag" or self.search_method == "pool") and \
+           (self.page != 1 and not self.quiet):
+               print("Please wait, loading page", self.page)
+               
         if self.login is not None and self.password is not None:
-            response = requests.get(self.board_url + "/posts.json", params=payload, auth = (self.login, self.password))
+            response = requests.get(self.board_url + "/posts.json", params=payload, auth=(self.login, self.password))
         else:
             response = requests.get(self.board_url + "/posts.json", params=payload)
         result = response.json()
-        self.total_result += result
         
         post_count = len(result)
         if not post_count and not self.total_result:
@@ -160,15 +153,17 @@ class Grabber():
             sys.exit()
         if (not self.page_limit or self.page < self.page_limit) and \
             post_count == self.post_limit:
+            self.total_result += result
             self.page += 1
             self.search()
         else:
+            self.total_result += result
             self.total_post_count = len(self.total_result)
             self.prepare()
 
             
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Grabber from danbooru imageboard.')
+    parser = argparse.ArgumentParser(description="Grabber from danbooru imageboard.")
     parser.add_argument("-n", "--nick", help="set nick for auth")
     parser.add_argument("-p", "--password", help="set pass for auth")
     parser.add_argument("-t", "--tag", help="search tags (standart danbooru format)")
@@ -192,10 +187,13 @@ if __name__ == "__main__":
 
     if args.tag:
        start(args.tag)
+       print("Search tag:", args.tag)
     if args.post:
        start(args.post, "post")
+       print("Search post with id:", args.post)
     if args.pool:
        start(args.pool, "pool")
+       print("Search pool with name/id:", args.pool)
     if args.update:
         print("Updating!")
         args.limit = 1
