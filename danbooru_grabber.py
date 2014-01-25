@@ -108,10 +108,10 @@ class Grabber():
         else:
             a = "yes"
         if "n" not in a:
-            pic_dir = os.getenv("HOME") + "/Pictures"
-            if not os.path.exists(pic_dir) and not os.path.isdir(pic_dir):
-                os.mkdir(pic_dir)
-            os.chdir(pic_dir)
+            os.chdir(os.path.expanduser("~"))
+            if not os.path.exists("Pictures") and not os.path.isdir("Pictures"):
+                os.mkdir("Pictures")
+            os.chdir("Pictures")
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
