@@ -9,7 +9,7 @@ Usage examples:
     
 search and download images with *"tag1 tag2"* tags
 
-    danbooru_grabber -l "123"
+    danbooru_grabber -o "123"
     
 search and download images from pool with *"123"* id
 
