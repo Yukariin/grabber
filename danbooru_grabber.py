@@ -131,10 +131,16 @@ class Grabber():
     def search(self):
         if self.search_method == "tag":
             query = self.query
+            if self.page:
+                print("Search tag:", self.query)
         if self.search_method == "post":
             query = "id:" + self.query
+            if self.page:
+                print("Search post with id:", self.query)
         if self.search_method == "pool":
             query = "pool:" + self.query
+            if self.page:
+                print("Search pool with name/id:", self.query)
         payload = {"tags": query, "page": self.page, "limit": self.post_limit}     
         
         if (self.search_method == "tag" or self.search_method == "pool") and \
@@ -187,13 +193,10 @@ if __name__ == "__main__":
 
     if args.tag:
        start(args.tag)
-       print("Search tag:", args.tag)
     if args.post:
        start(args.post, "post")
-       print("Search post with id:", args.post)
     if args.pool:
        start(args.pool, "pool")
-       print("Search pool with name/id:", args.pool)
     if args.update:
         print("Updating!")
         args.limit = 1
