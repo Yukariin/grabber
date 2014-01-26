@@ -178,7 +178,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--limit", help="number of downloaded pages", type=int)
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
     parser.add_argument("-u", "--update", help="update downloaded collection", nargs="?", const=os.path.expanduser("~") + "/Pictures")
-    parser.add_argument("-d", "--path", help="set path to download", nargs="?", const=os.path.expanduser("~") + "/Pictures")
+    parser.add_argument("-d", "--path", help="set path to download")
     args = parser.parse_args()
 
     def start(query, method="tag"):
