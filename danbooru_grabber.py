@@ -34,6 +34,7 @@ class Grabber():
         self.downloaded_count = 0
         self.skipped_count = 0
         self.quiet = False
+        self.pic_dir = os.path.expanduser("~") + "/Pictures"
         
         if self.query.startswith("pool:") and self.search_method != "pool":
             self.search_method = "pool"
@@ -108,10 +109,9 @@ class Grabber():
         else:
             a = "yes"
         if "n" not in a:
-            pic_dir = os.path.expanduser("~") + "/Pictures"
-            if not os.path.exists(pic_dir) and not os.path.isdir(pic_dir):
-                os.mkdir(pic_dir)
-            os.chdir(pic_dir)
+            if not os.path.exists(self.pic_dir) and not os.path.isdir(self.pic_dir):
+                os.mkdir(self.pic_dir)
+            os.chdir(self.pic_dir)
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
@@ -177,7 +177,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--pool", help="search pool (by danbooru pool id or name)")
     parser.add_argument("-l", "--limit", help="number of downloaded pages", type=int)
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-u", "--update", action="store_true", help="update downloaded collection")
+    parser.add_argument("-u", "--update", help="update downloaded collection", nargs="?", const=os.path.expanduser("~") + "/Pictures")
+    parser.add_argument("-d", "--path", help="set path to download", nargs="?", const=os.path.expanduser("~") + "/Pictures")
     args = parser.parse_args()
 
     def start(query, method="tag"):
@@ -189,6 +190,8 @@ if __name__ == "__main__":
             grabber.page_limit = args.limit
         if args.quiet:
             grabber.quiet = True
+        if args.update or args.path:
+            grabber.pic_dir = args.update or args.path
         grabber.search()
 
     if args.tag:
@@ -201,7 +204,10 @@ if __name__ == "__main__":
         print("Updating!")
         args.limit = 1
         args.quiet = True
-        pic_dir = os.path.expanduser("~") + "/Pictures/"
+        if not args.update.endswith("/"):
+            pic_dir = args.update + "/"
+        else:
+            pic_dir = args.update
         folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
         
         for name in folder_list:
