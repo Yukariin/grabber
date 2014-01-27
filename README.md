@@ -21,7 +21,7 @@ search and download image with *"12345"* id
     
 search tags with using authorisation (by default not using) as user *"nick"* and password *"password"*
 
-For more options/queries see script help, donmai.us [API docs][1] and [cheatsheet][2]
+For more options/queries see script help, donmai.us [API docs][1] and [cheatsheet][2].
 
 
 Requirements    
