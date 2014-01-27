@@ -33,6 +33,7 @@ class Grabber():
         self.download_count = 0
         self.downloaded_count = 0
         self.skipped_count = 0
+        self.error_count = 0
         self.quiet = False
         self.pic_dir = os.path.expanduser("~") + "/Pictures"
         
@@ -53,16 +54,22 @@ class Grabber():
         
         def get(file_url, file_name):
             self.download_count += 1
-            print("{}/{}".format(self.download_count, self.total_post_count),
-                   "({}%)".format(round(self.download_count/(self.total_post_count/100))),
-                   "downloading", file_name)
             r = requests.get(file_url, stream = True)
-            with open(file_name, "wb") as f:
-                for chunk in r.iter_content(chunk_size = 1024):
-                    if chunk:
-                        f.write(chunk)
-                        f.flush()
-            self.downloaded_count += 1
+            if r.status_code == 200:
+                print("{}/{}".format(self.download_count, self.total_post_count),
+                      "({}%)".format(round(self.download_count/(self.total_post_count/100))),
+                      "downloading", file_name)
+                with open(file_name, "wb") as f:
+                    for chunk in r.iter_content(chunk_size = 1024):
+                        if chunk:
+                            f.write(chunk)
+                            f.flush()
+                self.downloaded_count += 1
+            else:
+                print("{}/{}".format(self.download_count, self.total_post_count),
+                      "({}%)".format(round(self.download_count/(self.total_post_count/100))),
+                      file_name, "downloading failed, status code is:", r.status_code)
+                self.error_count += 1
             
         if os.path.exists(file_name) and os.path.isfile(file_name):
             local_file_md5 = md5sum(file_name)
@@ -74,8 +81,6 @@ class Grabber():
                            "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                            "md5 match! Skipping download.")
             else:
-                if not self.quiet:
-                    print("md5 mismatch! Restart file download.")
                 os.remove(file_name)
                 get(file_url, file_name)
         else:
@@ -123,7 +128,7 @@ class Grabber():
                 
             with ThreadPoolExecutor(max_workers=self.threads) as e:
                 e.map(self.parser, self.total_result)
-            print("Done! TTL: {}, OK: {}, SKP: {}".format(self.total_post_count, self.downloaded_count, self.skipped_count))
+            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}".format(self.total_post_count, self.error_count, self.downloaded_count, self.skipped_count))
         else:
             print("Exit.")
             sys.exit()
@@ -208,7 +213,7 @@ if __name__ == "__main__":
             pic_dir = args.update + "/"
         else:
             pic_dir = args.update
-        folder_list = [name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)]
+        folder_list = sorted([name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)])
         
         for name in folder_list:
             print("--------------------------------")
