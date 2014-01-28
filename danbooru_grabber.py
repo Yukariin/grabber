@@ -55,7 +55,7 @@ class Grabber():
         def get(file_url, file_name):
             self.download_count += 1
             r = requests.get(file_url, stream = True)
-            if r.status_code == 200:
+            if r.status_code == requests.codes.ok:
                 print("{}/{}".format(self.download_count, self.total_post_count),
                       "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                       "downloading", file_name)
