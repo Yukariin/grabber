@@ -60,10 +60,9 @@ class Grabber():
                       "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                       "downloading", file_name)
                 with open(file_name, "wb") as f:
-                    for chunk in r.iter_content(chunk_size = 1024):
-                        if chunk:
-                            f.write(chunk)
-                            f.flush()
+                    for block in r.iter_content(1024):
+                        if block:
+                            f.write(block)
                 self.downloaded_count += 1
             else:
                 print("{}/{}".format(self.download_count, self.total_post_count),
