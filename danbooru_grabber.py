@@ -155,21 +155,25 @@ class Grabber():
             response = requests.get(self.board_url + "/posts.json", params=payload, auth=(self.login, self.password))
         else:
             response = requests.get(self.board_url + "/posts.json", params=payload)
-        result = response.json()
         
-        post_count = len(result)
-        if not post_count and not self.total_result:
-            print("Not found.")
-            sys.exit()
-        if (not self.page_limit or self.page < self.page_limit) and \
-            post_count == self.post_limit:
-            self.total_result += result
-            self.page += 1
-            self.search()
+        if response.status_code == requests.codes.ok:
+            result = response.json()
+            post_count = len(result)
+            if not post_count and not self.total_result:
+                print("Not found.")
+                sys.exit()
+            if (not self.page_limit or self.page < self.page_limit) and \
+                post_count == self.post_limit:
+                self.total_result += result
+                self.page += 1
+                self.search()
+            else:
+                self.total_result += result
+                self.total_post_count = len(self.total_result)
+                self.prepare()
         else:
-            self.total_result += result
-            self.total_post_count = len(self.total_result)
-            self.prepare()
+            print("Get results failed, status code is:", response.status_code)
+            sys.exit(1)
 
             
 if __name__ == "__main__":
