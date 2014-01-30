@@ -212,15 +212,20 @@ if __name__ == "__main__":
         print("Updating!")
         args.limit = 1
         args.quiet = True
+        
         if not args.update.endswith("/"):
             pic_dir = args.update + "/"
         else:
             pic_dir = args.update
-        folder_list = sorted([name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)])
         
-        for name in folder_list:
-            print("--------------------------------")
-            start(name)
+        folder_list = sorted([name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)])
+        if len(folder_list):
+            for name in folder_list:
+                print("--------------------------------")
+                start(name)
+        else:
+            print("There no any folders found.")
+            sys.exit()
     if not any(vars(args).values()):
         parser.print_help()
             
