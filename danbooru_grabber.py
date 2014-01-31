@@ -65,10 +65,10 @@ class Grabber():
                             f.write(block)
                 self.downloaded_count += 1
             else:
+                self.error_count += 1
                 print("{}/{}".format(self.download_count, self.total_post_count),
                       "({}%)".format(round(self.download_count/(self.total_post_count/100))),
                       file_name, "downloading failed, status code is:", r.status_code)
-                self.error_count += 1
             
         if os.path.exists(file_name) and os.path.isfile(file_name):
             local_file_md5 = md5sum(file_name)
@@ -152,15 +152,15 @@ class Grabber():
                print("Please wait, loading page", self.page)
                
         if self.login is not None and self.password is not None:
-            response = requests.get(self.board_url + "/posts.json", params=payload, auth=(self.login, self.password))
+            resp = requests.get(self.board_url + "/posts.json", params=payload, auth=(self.login, self.password))
         else:
-            response = requests.get(self.board_url + "/posts.json", params=payload)
+            resp = requests.get(self.board_url + "/posts.json", params=payload)
         
-        if response.status_code == requests.codes.ok:
-            if "application/json" in response.headers["content-type"]:
-                result = response.json()
+        if resp.status_code == requests.codes.ok:
+            if "application/json" in resp.headers["content-type"]:
+                result = resp.json()
             else:
-                print("Here are no JSON, content type is:", response.headers["content-type"])
+                print("There are no JSON, content type is:", resp.headers["content-type"])
                 sys.exit(1)
             post_count = len(result)
             if not post_count and not self.total_result:
@@ -176,7 +176,7 @@ class Grabber():
                 self.total_post_count = len(self.total_result)
                 self.prepare()
         else:
-            print("Get results failed, status code is:", response.status_code)
+            print("Get results failed, status code is:", resp.status_code)
             sys.exit(1)
 
             
