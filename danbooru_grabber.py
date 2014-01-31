@@ -157,7 +157,11 @@ class Grabber():
             response = requests.get(self.board_url + "/posts.json", params=payload)
         
         if response.status_code == requests.codes.ok:
-            result = response.json()
+            if "application/json" in response.headers["content-type"]:
+                result = response.json()
+            else:
+                print("Here are no JSON, content type is:", response.headers["content-type"])
+                sys.exit(1)
             post_count = len(result)
             if not post_count and not self.total_result:
                 print("Not found.")
