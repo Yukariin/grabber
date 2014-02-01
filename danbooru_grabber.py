@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import os
 import sys
-
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 
@@ -43,7 +42,8 @@ class Grabber():
         if self.query.startswith("id:") and self.search_method != "post":
             self.search_method = "post"
             self.query = self.query.replace("id:", "")
-        
+    
+    
     def downloader(self, file_url, file_name, md5):
         def md5sum(file_name):
             with open(file_name, "rb") as file_to_check:
@@ -84,6 +84,7 @@ class Grabber():
         else:
             get(file_url, file_name)
   
+  
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
         file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
@@ -94,7 +95,8 @@ class Grabber():
                 self.downloader(file_url, file_name, md5)
         else:
             self.downloader(file_url, file_name, md5)
-            
+      
+      
     def prepare(self):
         if self.blacklist:
             if self.search_method == "tag":
@@ -133,6 +135,7 @@ class Grabber():
         else:
             print("Exit.")
             sys.exit()
+    
     
     def search(self):
         if self.search_method == "tag":
@@ -234,4 +237,3 @@ if __name__ == "__main__":
             sys.exit()
     if not any(vars(args).values()):
         parser.print_help()
-            
