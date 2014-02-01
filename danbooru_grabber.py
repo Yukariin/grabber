@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import sys
-import os
 import hashlib
+import os
+import sys
 
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
@@ -71,8 +71,7 @@ class Grabber():
                       file_name, "downloading failed, status code is:", r.status_code)
             
         if os.path.exists(file_name) and os.path.isfile(file_name):
-            local_file_md5 = md5sum(file_name)
-            if local_file_md5 == md5:
+            if md5sum(file_name) == md5:
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
@@ -90,7 +89,10 @@ class Grabber():
         file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
         md5 = post["md5"]
         
-        if not post["is_blacklisted"]:
+        if self.blacklist:
+            if not post["is_blacklisted"]:
+                self.downloader(file_url, file_name, md5)
+        else:
             self.downloader(file_url, file_name, md5)
             
     def prepare(self):
@@ -223,7 +225,7 @@ if __name__ == "__main__":
             pic_dir = args.update
         
         folder_list = sorted([name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)])
-        if len(folder_list):
+        if folder_list:
             for name in folder_list:
                 print("--------------------------------")
                 start(name)
