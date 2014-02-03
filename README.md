@@ -15,7 +15,8 @@ search and download images from pool with *"123"* id
 search and download image with *"12345"* id
 
     danbooru_grabber -n nick -p password -t "tag1"  
-search tags with using authorisation (by default not using) as user *"nick"* and password *"password"*  
+search tags with using authorisation (by default not using) as user *"nick"* and password *"password"*
+
 For more options/queries see script help, donmai.us [API docs][1] and [cheatsheet][2].
 
 
@@ -23,7 +24,6 @@ Requirements
 -------
 
 Here are no platform specific requirements. But for retrieve json and downloading images will need [requests][4] lib.
-
 
 
 [1]:http://danbooru.donmai.us/wiki_pages/43568
