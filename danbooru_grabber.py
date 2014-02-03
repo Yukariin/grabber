@@ -54,10 +54,12 @@ class Grabber():
         
         def get(file_url, file_name):
             self.download_count += 1
-            r = requests.get(file_url, stream = True)
+            r = requests.get(file_url, stream=True)
             if r.status_code == requests.codes.ok:
                 print("{}/{}".format(self.download_count, self.total_post_count),
-                      "({}%)".format(round(self.download_count/(self.total_post_count/100))),
+                      "({}%)" \
+                          .format(round(self.download_count/
+                                        (self.total_post_count/100))),
                       "downloading", file_name)
                 with open(file_name, "wb") as f:
                     for block in r.iter_content(1024):
@@ -67,16 +69,22 @@ class Grabber():
             else:
                 self.error_count += 1
                 print("{}/{}".format(self.download_count, self.total_post_count),
-                      "({}%)".format(round(self.download_count/(self.total_post_count/100))),
-                      file_name, "downloading failed, status code is:", r.status_code)
+                      "({}%)" \
+                          .format(round(self.download_count/
+                                        (self.total_post_count/100))),
+                      file_name, "downloading failed, status code is:",
+                      r.status_code)
             
         if os.path.exists(file_name) and os.path.isfile(file_name):
             if md5sum(file_name) == md5:
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
-                    print("{}/{}".format(self.download_count, self.total_post_count),
-                           "({}%)".format(round(self.download_count/(self.total_post_count/100))),
+                    print("{}/{}".format(self.download_count,
+                                         self.total_post_count),
+                           "({}%)" \
+                               .format(round(self.download_count/
+                                             (self.total_post_count/100))),
                            "md5 match! Skipping download.")
             else:
                 os.remove(file_name)
@@ -87,7 +95,8 @@ class Grabber():
   
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
-        file_name = "{} - {}.{}".format("Donmai.us", post["id"], post["file_ext"])
+        file_name = "{} - {}.{}".format("Donmai.us", post["id"],
+                                        post["file_ext"])
         md5 = post["md5"]
         
         if self.blacklist:
@@ -97,17 +106,19 @@ class Grabber():
             self.downloader(file_url, file_name, md5)
       
       
-    def prepare(self):
+    def prepare(self, results):
+        self.total_post_count = len(results)
         if self.blacklist:
             if self.search_method == "tag":
                 for tag in self.query.split():
                     if tag in self.blacklist:
                         self.blacklist.remove(tag)
-            for post in self.total_result:
+            for post in results:
                 post["is_blacklisted"] = False
                 if self.search_method == "tag":
                     for tag in self.blacklist:
-                        if tag in post["tag_string"] and not post["is_blacklisted"]:
+                        if tag in post["tag_string"] and \
+                            not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
                             
@@ -117,7 +128,8 @@ class Grabber():
         else:
             a = "yes"
         if "n" not in a:
-            if not os.path.exists(self.pic_dir) and not os.path.isdir(self.pic_dir):
+            if not os.path.exists(self.pic_dir) and \
+                not os.path.isdir(self.pic_dir):
                 os.mkdir(self.pic_dir)
             os.chdir(self.pic_dir)
             if self.search_method != "post":
@@ -125,13 +137,16 @@ class Grabber():
                     folder_name = self.query
                 if self.search_method == "pool":
                     folder_name = "pool:{}".format(self.query)
-                if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
+                if not os.path.exists(folder_name) and \
+                    not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
                 
             with ThreadPoolExecutor(max_workers=self.threads) as e:
-                e.map(self.parser, self.total_result)
-            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}".format(self.total_post_count, self.error_count, self.downloaded_count, self.skipped_count))
+                e.map(self.parser, results)
+            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}" \
+                .format(self.total_post_count, self.error_count,
+                        self.downloaded_count, self.skipped_count))
         else:
             print("Exit.")
             sys.exit()
@@ -157,7 +172,8 @@ class Grabber():
                print("Please wait, loading page", self.page)
                
         if self.login is not None and self.password is not None:
-            resp = requests.get(self.board_url + "/posts.json", params=payload, auth=(self.login, self.password))
+            resp = requests.get(self.board_url + "/posts.json", params=payload,
+                                auth=(self.login, self.password))
         else:
             resp = requests.get(self.board_url + "/posts.json", params=payload)
         
@@ -165,7 +181,8 @@ class Grabber():
             if "application/json" in resp.headers["content-type"]:
                 result = resp.json()
             else:
-                print("There are no JSON, content type is:", resp.headers["content-type"])
+                print("There are no JSON, content type is:",
+                      resp.headers["content-type"])
                 sys.exit(1)
             post_count = len(result)
             if not post_count and not self.total_result:
@@ -178,8 +195,7 @@ class Grabber():
                 self.search()
             else:
                 self.total_result += result
-                self.total_post_count = len(self.total_result)
-                self.prepare()
+                self.prepare(self.total_result)
         else:
             print("Get results failed, status code is:", resp.status_code)
             sys.exit(1)
@@ -192,9 +208,11 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--tag", help="search tags (standart danbooru format)")
     parser.add_argument("-i", "--post", help="search post (by danbooru post id)")
     parser.add_argument("-o", "--pool", help="search pool (by danbooru pool id or name)")
-    parser.add_argument("-l", "--limit", help="number of downloaded pages", type=int)
+    parser.add_argument("-l", "--limit", type=int,
+                        help="number of downloaded pages")
     parser.add_argument("-q", "--quiet", action="store_true", help="quiet mode")
-    parser.add_argument("-u", "--update", help="update downloaded collection", nargs="?", const=os.path.expanduser("~") + "/Pictures")
+    parser.add_argument("-u", "--update", help="update downloaded collection",
+                        nargs="?", const=os.path.expanduser("~") + "/Pictures")
     parser.add_argument("-d", "--path", help="set path to download")
     args = parser.parse_args()
 
@@ -227,7 +245,8 @@ if __name__ == "__main__":
         else:
             pic_dir = args.update
         
-        folder_list = sorted([name for name in os.listdir(pic_dir) if os.path.isdir(pic_dir + name)])
+        folder_list = sorted([name for name in os.listdir(pic_dir) if \
+            os.path.isdir(pic_dir + name)])
         if folder_list:
             for name in folder_list:
                 print("--------------------------------")
