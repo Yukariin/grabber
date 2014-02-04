@@ -15,7 +15,7 @@ except ImportError:
     sys.exit(1)
 
 
-class Grabber():
+class Grabber:
     def __init__(self, query, search_method):
         self.board_url = "http://donmai.us"
         self.query = query.strip()
