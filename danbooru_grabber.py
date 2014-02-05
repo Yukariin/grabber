@@ -15,7 +15,7 @@ except ImportError:
     sys.exit(1)
 
 
-class Grabber():
+class Grabber:
     def __init__(self, query, search_method):
         self.board_url = "http://donmai.us"
         self.query = query.strip()
@@ -57,9 +57,8 @@ class Grabber():
             r = requests.get(file_url, stream=True)
             if r.status_code == requests.codes.ok:
                 print("{}/{}".format(self.download_count, self.total_post_count),
-                      "({}%)" \
-                          .format(round(self.download_count/
-                                        (self.total_post_count/100))),
+                      "({}%)".format(round(self.download_count/
+                                           (self.total_post_count/100))),
                       "downloading", file_name)
                 with open(file_name, "wb") as f:
                     for block in r.iter_content(1024):
@@ -69,9 +68,8 @@ class Grabber():
             else:
                 self.error_count += 1
                 print("{}/{}".format(self.download_count, self.total_post_count),
-                      "({}%)" \
-                          .format(round(self.download_count/
-                                        (self.total_post_count/100))),
+                      "({}%)".format(round(self.download_count/
+                                           (self.total_post_count/100))),
                       file_name, "downloading failed, status code is:",
                       r.status_code)
             
@@ -80,10 +78,8 @@ class Grabber():
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
-                    print("{}/{}".format(self.download_count,
-                                         self.total_post_count),
-                           "({}%)" \
-                               .format(round(self.download_count/
+                    print("{}/{}".format(self.download_count,self.total_post_count),
+                           "({}%)".format(round(self.download_count/
                                              (self.total_post_count/100))),
                            "md5 match! Skipping download.")
             else:
@@ -95,8 +91,7 @@ class Grabber():
   
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
-        file_name = "{} - {}.{}".format("Donmai.us", post["id"],
-                                        post["file_ext"])
+        file_name = "{} - {}.{}".format("Donmai.us", post["id"],post["file_ext"])
         md5 = post["md5"]
         
         if self.blacklist:
@@ -117,8 +112,7 @@ class Grabber():
                 post["is_blacklisted"] = False
                 if self.search_method == "tag":
                     for tag in self.blacklist:
-                        if tag in post["tag_string"] and \
-                            not post["is_blacklisted"]:
+                        if tag in post["tag_string"] and not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
                             
@@ -128,8 +122,7 @@ class Grabber():
         else:
             a = "yes"
         if "n" not in a:
-            if not os.path.exists(self.pic_dir) and \
-                not os.path.isdir(self.pic_dir):
+            if not os.path.exists(self.pic_dir) and not os.path.isdir(self.pic_dir):
                 os.mkdir(self.pic_dir)
             os.chdir(self.pic_dir)
             if self.search_method != "post":
@@ -137,8 +130,7 @@ class Grabber():
                     folder_name = self.query
                 if self.search_method == "pool":
                     folder_name = "pool:{}".format(self.query)
-                if not os.path.exists(folder_name) and \
-                    not os.path.isdir(folder_name):
+                if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
                 
