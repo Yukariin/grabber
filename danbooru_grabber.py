@@ -56,7 +56,8 @@ class Grabber:
             self.download_count += 1
             r = requests.get(file_url, stream=True)
             if r.status_code == requests.codes.ok:
-                print("{}/{}".format(self.download_count, self.total_post_count),
+                print("{}/{}".format(self.download_count,
+                                     self.total_post_count),
                       "({}%)".format(round(self.download_count/
                                            (self.total_post_count/100))),
                       "downloading", file_name)
@@ -67,7 +68,8 @@ class Grabber:
                 self.downloaded_count += 1
             else:
                 self.error_count += 1
-                print("{}/{}".format(self.download_count, self.total_post_count),
+                print("{}/{}".format(self.download_count,
+                                     self.total_post_count),
                       "({}%)".format(round(self.download_count/
                                            (self.total_post_count/100))),
                       file_name, "downloading failed, status code is:",
@@ -78,7 +80,8 @@ class Grabber:
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
-                    print("{}/{}".format(self.download_count,self.total_post_count),
+                    print("{}/{}".format(self.download_count,
+                                         self.total_post_count),
                            "({}%)".format(round(self.download_count/
                                              (self.total_post_count/100))),
                            "md5 match! Skipping download.")
@@ -91,7 +94,8 @@ class Grabber:
   
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
-        file_name = "{} - {}.{}".format("Donmai.us", post["id"],post["file_ext"])
+        file_name = "{} - {}.{}".format("Donmai.us", post["id"],
+                                        post["file_ext"])
         md5 = post["md5"]
         
         if self.blacklist:
@@ -112,7 +116,8 @@ class Grabber:
                 post["is_blacklisted"] = False
                 if self.search_method == "tag":
                     for tag in self.blacklist:
-                        if tag in post["tag_string"] and not post["is_blacklisted"]:
+                        if tag in post["tag_string"] and \
+                            not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
                             
@@ -122,20 +127,23 @@ class Grabber:
         else:
             a = "yes"
         if "n" not in a:
-            if not os.path.exists(self.pic_dir) and not os.path.isdir(self.pic_dir):
+            if not os.path.exists(self.pic_dir) and \
+                not os.path.isdir(self.pic_dir):
                 os.mkdir(self.pic_dir)
             os.chdir(self.pic_dir)
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
                 if self.search_method == "pool":
-                    folder_name = "pool:{}".format(self.query)
-                if not os.path.exists(folder_name) and not os.path.isdir(folder_name):
+                    folder_name = "pool:" + self.query
+                if not os.path.exists(folder_name) and \
+                    not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
                 
             with ThreadPoolExecutor(max_workers=self.threads) as e:
                 e.map(self.parser, results)
+                
             print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}" \
                 .format(self.total_post_count, self.error_count,
                         self.downloaded_count, self.skipped_count))
@@ -164,17 +172,17 @@ class Grabber:
                print("Please wait, loading page", self.page)
                
         if self.login is not None and self.password is not None:
-            resp = requests.get(self.board_url + "/posts.json", params=payload,
+            r = requests.get(self.board_url + "/posts.json", params=payload,
                                 auth=(self.login, self.password))
         else:
-            resp = requests.get(self.board_url + "/posts.json", params=payload)
+            r = requests.get(self.board_url + "/posts.json", params=payload)
         
-        if resp.status_code == requests.codes.ok:
-            if "application/json" in resp.headers["content-type"]:
-                result = resp.json()
+        if r.status_code == requests.codes.ok:
+            if "application/json" in r.headers["content-type"]:
+                result = r.json()
             else:
                 print("There are no JSON, content type is:",
-                      resp.headers["content-type"])
+                      r.headers["content-type"])
                 sys.exit(1)
             post_count = len(result)
             if not post_count and not self.total_result:
