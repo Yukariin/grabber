@@ -197,7 +197,7 @@ class Grabber:
                 self.total_result += result
                 self.prepare(self.total_result)
         else:
-            print("Get results failed, status code is:", resp.status_code)
+            print("Get results failed, status code is:", r.status_code)
             sys.exit(1)
 
             
