@@ -34,7 +34,7 @@ class Grabber:
         self.skipped_count = 0
         self.error_count = 0
         self.quiet = False
-        self.pic_dir = os.path.expanduser("~") + "/Pictures"
+        self.pics_dir = os.path.expanduser("~") + "/Pictures"
         
         if self.query.startswith("pool:") and self.search_method != "pool":
             self.search_method = "pool"
@@ -127,10 +127,10 @@ class Grabber:
         else:
             a = "yes"
         if "n" not in a:
-            if not os.path.exists(self.pic_dir) and \
-                not os.path.isdir(self.pic_dir):
-                os.mkdir(self.pic_dir)
-            os.chdir(self.pic_dir)
+            if not os.path.exists(self.pics_dir) and \
+                not os.path.isdir(self.pics_dir):
+                os.mkdir(self.pics_dir)
+            os.chdir(self.pics_dir)
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
@@ -176,7 +176,7 @@ class Grabber:
                                 auth=(self.login, self.password))
         else:
             r = requests.get(self.board_url + "/posts.json", params=payload)
-        
+
         if r.status_code == requests.codes.ok:
             if "application/json" in r.headers["content-type"]:
                 result = r.json()
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         if args.quiet:
             grabber.quiet = True
         if args.update or args.path:
-            grabber.pic_dir = args.update or args.path
+            grabber.pics_dir = args.update or args.path
         grabber.search()
 
     if args.tag:
@@ -241,12 +241,12 @@ if __name__ == "__main__":
         args.quiet = True
         
         if not args.update.endswith("/"):
-            pic_dir = args.update + "/"
+            pics_dir = args.update + "/"
         else:
-            pic_dir = args.update
+            pics_dir = args.update
         
-        folder_list = sorted([name for name in os.listdir(pic_dir) if \
-            os.path.isdir(pic_dir + name)])
+        folder_list = sorted([name for name in os.listdir(pics_dir) if \
+            os.path.isdir(pics_dir + name)])
         if folder_list:
             for name in folder_list:
                 print("--------------------------------")
