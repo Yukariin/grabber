@@ -93,12 +93,13 @@ class Grabber:
   
   
     def parser(self, post):
-        file_url = self.board_url + post["file_url"]
-        file_name = "{} - {}.{}".format("Donmai.us", post["id"],
-                                        post["file_ext"])
-        md5 = post["md5"]
+        md5, file_ext = os.path.splitext(os.path.basename(post["file_url"]))
         
-        if self.blacklist:
+        file_url = self.board_url + post["file_url"]
+        file_name = "{} - {}{}".format("Donmai.us", post["id"],
+                                        file_ext)
+        
+        if self.blacklist: 
             if not post["is_blacklisted"]:
                 self.downloader(file_url, file_name, md5)
         else:
