@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 try:
     import requests
-    import lxml.html
 except ImportError:
     print("Requests lib was not found!")
     sys.exit(1)
@@ -97,15 +96,13 @@ class Grabber:
   
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
-
         if "file_ext" in post and "md5" in post:
             file_ext = "." + post["file_ext"]
             md5 = post["md5"]
         else:
             md5, file_ext = os.path.splitext(os.path.basename(file_url))
-  
         file_name = "{} - {}{}".format("Donmai.us", post["id"],
-                                        file_ext)
+                                       file_ext)
         file_size = post["file_size"]
         
         if self.blacklist:
@@ -130,7 +127,6 @@ class Grabber:
                             not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
-                            
                 if "file_url" not in post:
                     data = requests.get("{}/posts/{}".format(self.board_url,
                                                              post["id"]))
