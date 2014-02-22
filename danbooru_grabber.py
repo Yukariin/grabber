@@ -5,11 +5,13 @@ import argparse
 import hashlib
 import os
 import sys
+import re
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 
 try:
     import requests
+    import lxml.html
 except ImportError:
     print("Requests lib was not found!")
     sys.exit(1)
@@ -44,7 +46,7 @@ class Grabber:
             self.query = self.query.replace("id:", "")
     
     
-    def downloader(self, file_url, file_name, md5):
+    def downloader(self, file_url, file_name, file_size, md5):
         def md5sum(file_name):
             with open(file_name, "rb") as file_to_check:
                 hasher = hashlib.md5()
@@ -76,7 +78,8 @@ class Grabber:
                       r.status_code)
             
         if os.path.exists(file_name) and os.path.isfile(file_name):
-            if md5sum(file_name) == md5:
+            if os.path.getsize(file_name) == file_size and \
+                md5sum(file_name) == md5:
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
@@ -93,17 +96,23 @@ class Grabber:
   
   
     def parser(self, post):
-        md5, file_ext = os.path.splitext(os.path.basename(post["file_url"]))
-        
         file_url = self.board_url + post["file_url"]
+
+        if "file_ext" in post and "md5" in post:
+            file_ext = "." + post["file_ext"]
+            md5 = post["md5"]
+        else:
+            md5, file_ext = os.path.splitext(os.path.basename(file_url))
+  
         file_name = "{} - {}{}".format("Donmai.us", post["id"],
                                         file_ext)
+        file_size = post["file_size"]
         
-        if self.blacklist: 
-            if not post["is_blacklisted"]:
-                self.downloader(file_url, file_name, md5)
+        if self.blacklist:
+            if not post["is_blacklisted"]: 
+                self.downloader(file_url, file_name, file_size, md5)
         else:
-            self.downloader(file_url, file_name, md5)
+            self.downloader(file_url, file_name, file_size, md5)
       
       
     def prepare(self, results):
@@ -121,6 +130,12 @@ class Grabber:
                             not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
+                            
+                if "file_url" not in post:
+                    data = requests.get("{}/posts/{}".format(self.board_url,
+                                                             post["id"]))
+                    post["file_url"] = re.findall('/data/[0-9a-f]+.[a-z]+',
+                                                  data.text)[0]
                             
         print("Total results:", self.total_post_count)
         if not self.quiet:
