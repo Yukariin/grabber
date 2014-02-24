@@ -96,7 +96,7 @@ class Grabber:
   
     def parser(self, post):
         file_url = self.board_url + post["file_url"]
-        if "file_ext" in post and "md5" in post:
+        if "file_ext" and "md5" in post:
             file_ext = "." + post["file_ext"]
             md5 = post["md5"]
         else:
@@ -128,10 +128,13 @@ class Grabber:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
                 if "file_url" not in post:
-                    data = requests.get("{}/posts/{}".format(self.board_url,
+                    r = requests.get("{}/posts/{}".format(self.board_url,
                                                              post["id"]))
-                    post["file_url"] = re.findall('/data/[0-9a-f]+.[a-z]+',
-                                                  data.text)[0]
+                    s = re.findall('/data/[0-9a-f]+.[a-z]+', r.text)
+                    if s:
+                        post["file_url"] = s[0]
+                    else:
+                        print("Failed get file url!")
                             
         print("Total results:", self.total_post_count)
         if not self.quiet:
@@ -177,7 +180,7 @@ class Grabber:
             query = "pool:" + self.query
             if self.page == 1:
                 print("Search pool with name/id:", self.query)
-        payload = {"tags": query, "page": self.page, "limit": self.post_limit}     
+        payload = {"tags": query, "page": self.page, "limit": self.post_limit}
         
         if (self.search_method == "tag" or self.search_method == "pool") and \
            (self.page != 1 and not self.quiet):
