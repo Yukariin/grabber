@@ -20,7 +20,8 @@ URLS = ["http://donmai.us",
         "http://gelbooru.com"]
 
 
-class Grabber:
+class Grabber(object):
+    """Main grabber class"""
     def __init__(self, query, search_method):
         self.board_url = URLS[0]
         self.query = query.strip()
@@ -49,7 +50,9 @@ class Grabber:
             self.query = self.query.replace("id:", "")
 
     def downloader(self, file_url, file_name, file_size, md5):
+        """Check and download files"""
         def md5sum(file_name):
+            """Get file md5"""
             with open(file_name, "rb") as file_to_check:
                 hasher = hashlib.md5()
                 for buf in iter(partial(file_to_check.read, 128), b""):
@@ -57,6 +60,7 @@ class Grabber:
             return hasher.hexdigest()
 
         def get(file_url, file_name):
+            """Download file"""
             self.download_count += 1
             r = requests.get(file_url, stream=True)
             if r.status_code == requests.codes.ok:
@@ -97,6 +101,7 @@ class Grabber:
             get(file_url, file_name)
 
     def parser(self, post):
+        """Parse post and get url, tags, etc"""
         file_url = self.board_url + post["file_url"]
         if "file_ext" and "md5" in post:
             file_ext = "." + post["file_ext"]
@@ -114,6 +119,7 @@ class Grabber:
             self.downloader(file_url, file_name, file_size, md5)
 
     def prepare(self, results):
+        """Prepare results for parsing and downloading"""
         self.total_post_count = len(results)
         if self.blacklist:
             if self.search_method == "tag":
@@ -168,6 +174,7 @@ class Grabber:
             sys.exit()
 
     def search(self):
+        """Search and get results"""
         if self.search_method == "tag":
             query = self.query
             if self.page == 1:
@@ -184,7 +191,7 @@ class Grabber:
 
         if (self.search_method == "tag" or self.search_method == "pool") and \
            (self.page != 1 and not self.quiet):
-                print("Please wait, loading page", self.page)
+            print("Please wait, loading page", self.page)
 
         if self.login is not None and self.password is not None:
             r = requests.get(self.board_url + "/posts.json", params=payload,
@@ -237,6 +244,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     def start(query, method="tag"):
+        """Creating object, change vars and start search"""
         grabber = Grabber(query, method)
         if args.nick and args.password:
             grabber.login = args.nick
