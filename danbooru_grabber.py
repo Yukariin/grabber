@@ -83,7 +83,7 @@ class Grabber(object):
                       file_name, "downloading failed, status code is:",
                       r.status_code)
 
-        if os.path.exists(file_name) and os.path.isfile(file_name):
+        if os.path.isfile(file_name):
             if os.path.getsize(file_name) == file_size and \
                md5sum(file_name) == md5:
                 self.download_count += 1
@@ -149,8 +149,7 @@ class Grabber(object):
         else:
             a = "yes"
         if "n" not in a:
-            if not os.path.exists(self.pics_dir) and \
-               not os.path.isdir(self.pics_dir):
+            if not os.path.isdir(self.pics_dir):
                 os.mkdir(self.pics_dir)
             os.chdir(self.pics_dir)
             if self.search_method != "post":
@@ -158,8 +157,7 @@ class Grabber(object):
                     folder_name = self.query
                 if self.search_method == "pool":
                     folder_name = "pool:" + self.query
-                if not os.path.exists(folder_name) and \
-                   not os.path.isdir(folder_name):
+                if not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
 
@@ -224,8 +222,8 @@ class Grabber(object):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=
-                                     "Grabber from danbooru imageboard.")
+    parser = argparse.ArgumentParser(
+        description="Grabber from danbooru imageboard.")
     parser.add_argument("-n", "--nick", help="set nick for auth")
     parser.add_argument("-p", "--password", help="set pass for auth")
     parser.add_argument("-t", "--tag",
@@ -247,8 +245,7 @@ if __name__ == "__main__":
         """Creating object, change vars and start search"""
         grabber = Grabber(query, method)
         if args.nick and args.password:
-            grabber.login = args.nick
-            grabber.password = args.password
+            grabber.login, grabber.password = args.nick, args.password
         if args.limit:
             grabber.page_limit = args.limit
         if args.quiet:
