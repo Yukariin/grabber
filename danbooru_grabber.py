@@ -45,7 +45,7 @@ class Grabber(object):
         if self.query.startswith("pool:") and self.search_method != "pool":
             self.search_method = "pool"
             self.query = self.query.replace("pool:", "")
-        if self.query.startswith("id:") and self.search_method != "post":
+        elif self.query.startswith("id:") and self.search_method != "post":
             self.search_method = "post"
             self.query = self.query.replace("id:", "")
 
@@ -103,13 +103,10 @@ class Grabber(object):
     def parser(self, post):
         """Parse post and get url, tags, etc"""
         file_url = self.board_url + post["file_url"]
-        if "file_ext" and "md5" in post:
-            file_ext = "." + post["file_ext"]
-            md5 = post["md5"]
-        else:
-            md5, file_ext = os.path.splitext(os.path.basename(file_url))
-        file_name = "{} - {}{}".format("Donmai.us", post["id"],
-                                       file_ext)
+        file_ext = post["file_ext"]
+        md5 = post["md5"]
+        file_name = "{} - {}.{}".format("Donmai.us", post["id"],
+                                        file_ext)
         file_size = post["file_size"]
 
         if self.blacklist:
@@ -126,7 +123,24 @@ class Grabber(object):
                 for tag in self.query.split():
                     if tag in self.blacklist:
                         self.blacklist.remove(tag)
-            for post in results:
+        for post in results:
+            if "file_url" not in post:
+                r = requests.get("{}/posts/{}".format(self.board_url,
+                                                      post["id"]))
+                s = re.findall('/data/[0-9a-f]+.[a-z]+', r.text)
+                if s:
+                    post["file_url"] = s[0]
+                else:
+                    print("Failed get file url!")
+            if "file_ext" not in post:
+                post["file_ext"] = os.path.splitext(os.path.basename(
+                    post["file_url"]))[1].replace(".", "")
+            if "md5" not in post:
+                post["md5"] = os.path.splitext(os.path.basename(
+                    post["file_url"]))[0]
+            if "tag_string" not in post and "tags" in post:
+                post["tag_string"] = post.pop("tags")
+            if self.blacklist:
                 post["is_blacklisted"] = False
                 if self.search_method == "tag":
                     for tag in self.blacklist:
@@ -134,14 +148,6 @@ class Grabber(object):
                            not post["is_blacklisted"]:
                             post["is_blacklisted"] = True
                             self.total_post_count -= 1
-                if "file_url" not in post:
-                    r = requests.get("{}/posts/{}".format(self.board_url,
-                                                          post["id"]))
-                    s = re.findall('/data/[0-9a-f]+.[a-z]+', r.text)
-                    if s:
-                        post["file_url"] = s[0]
-                    else:
-                        print("Failed get file url!")
 
         print("Total results:", self.total_post_count)
         if not self.quiet:
@@ -155,8 +161,9 @@ class Grabber(object):
             if self.search_method != "post":
                 if self.search_method == "tag":
                     folder_name = self.query
-                if self.search_method == "pool":
+                elif self.search_method == "pool":
                     folder_name = "pool:" + self.query
+
                 if not os.path.isdir(folder_name):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
@@ -177,11 +184,11 @@ class Grabber(object):
             query = self.query
             if self.page == 1:
                 print("Search tag:", self.query)
-        if self.search_method == "post":
+        elif self.search_method == "post":
             query = "id:" + self.query
             if self.page == 1:
                 print("Search post with id:", self.query)
-        if self.search_method == "pool":
+        elif self.search_method == "pool":
             query = "pool:" + self.query
             if self.page == 1:
                 print("Search pool with name/id:", self.query)
@@ -256,11 +263,11 @@ if __name__ == "__main__":
 
     if args.tag:
         start(args.tag)
-    if args.post:
+    elif args.post:
         start(args.post, "post")
-    if args.pool:
+    elif args.pool:
         start(args.pool, "pool")
-    if args.update:
+    elif args.update:
         print("Updating!")
         args.limit = 1
         args.quiet = True
@@ -279,5 +286,5 @@ if __name__ == "__main__":
         else:
             print("There no any folders found.")
             sys.exit()
-    if not any(vars(args).values()):
+    elif not any(vars(args).values()):
         parser.print_help()
