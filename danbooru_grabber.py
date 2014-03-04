@@ -16,14 +16,10 @@ except ImportError:
     sys.exit(1)
 
 
-URLS = ["http://donmai.us",
-        "http://gelbooru.com"]
-
-
 class Grabber(object):
     """Main grabber class"""
     def __init__(self, query, search_method):
-        self.board_url = URLS[0]
+        self.board_url = "http://donmai.us"
         self.query = query.strip()
         self.search_method = search_method
         self.login = None
@@ -105,24 +101,20 @@ class Grabber(object):
         file_url = self.board_url + post["file_url"]
         file_ext = post["file_ext"]
         md5 = post["md5"]
+        file_size = post["file_size"]
         file_name = "{} - {}.{}".format("Donmai.us", post["id"],
                                         file_ext)
-        file_size = post["file_size"]
 
-        if self.blacklist:
-            if not post["is_blacklisted"]:
-                self.downloader(file_url, file_name, file_size, md5)
-        else:
+        if not post["is_blacklisted"]:
             self.downloader(file_url, file_name, file_size, md5)
 
     def prepare(self, results):
         """Prepare results for parsing and downloading"""
         self.total_post_count = len(results)
-        if self.blacklist:
-            if self.search_method == "tag":
-                for tag in self.query.split():
-                    if tag in self.blacklist:
-                        self.blacklist.remove(tag)
+        if self.blacklist and self.search_method == "tag":
+            for tag in self.query.split():
+                if tag in self.blacklist:
+                    self.blacklist.remove(tag)
         for post in results:
             if "file_url" not in post:
                 r = requests.get("{}/posts/{}".format(self.board_url,
@@ -132,6 +124,7 @@ class Grabber(object):
                     post["file_url"] = s[0]
                 else:
                     print("Failed get file url!")
+                    sys.exit(1)
             if "file_ext" not in post:
                 post["file_ext"] = os.path.splitext(os.path.basename(
                     post["file_url"]))[1].replace(".", "")
@@ -140,14 +133,14 @@ class Grabber(object):
                     post["file_url"]))[0]
             if "tag_string" not in post and "tags" in post:
                 post["tag_string"] = post.pop("tags")
-            if self.blacklist:
-                post["is_blacklisted"] = False
-                if self.search_method == "tag":
-                    for tag in self.blacklist:
-                        if tag in post["tag_string"] and \
-                           not post["is_blacklisted"]:
-                            post["is_blacklisted"] = True
-                            self.total_post_count -= 1
+
+            post["is_blacklisted"] = False
+            if self.blacklist and self.search_method == "tag":
+                for tag in self.blacklist:
+                    if tag in post["tag_string"] and \
+                            not post["is_blacklisted"]:
+                        post["is_blacklisted"] = True
+                        self.total_post_count -= 1
 
         print("Total results:", self.total_post_count)
         if not self.quiet:
@@ -215,7 +208,7 @@ class Grabber(object):
             if not post_count and not self.total_result:
                 print("Not found.")
                 sys.exit()
-            if (not self.page_limit or self.page < self.page_limit) and \
+            elif (not self.page_limit or self.page < self.page_limit) and \
                post_count == self.post_limit:
                 self.total_result += result
                 self.page += 1
