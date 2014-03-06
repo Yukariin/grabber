@@ -29,7 +29,6 @@ class Grabber(object):
         self.post_limit = 200
         self.threads = 10
         self.blacklist = "scat comic hard_translated".split()
-        self.total_result = []
         self.total_post_count = 0
         self.download_count = 0
         self.downloaded_count = 0
@@ -108,6 +107,36 @@ class Grabber(object):
         if not post["is_blacklisted"]:
             self.downloader(file_url, file_name, file_size, md5)
 
+    def start(self, results):
+        """Create forder and start downloading"""
+        print("Total results:", self.total_post_count)
+        if not self.quiet:
+            a = input("Do you want to continiue?\n")
+        else:
+            a = "yes"
+        if "n" not in a:
+            if not os.path.isdir(self.pics_dir):
+                os.mkdir(self.pics_dir)
+            os.chdir(self.pics_dir)
+            if self.search_method != "post":
+                if self.search_method == "tag":
+                    folder_name = self.query
+                elif self.search_method == "pool":
+                    folder_name = "pool:" + self.query
+
+                if not os.path.isdir(folder_name):
+                    os.mkdir(folder_name)
+                os.chdir(folder_name)
+
+            with ThreadPoolExecutor(max_workers=self.threads) as e:
+                e.map(self.parser, results)
+            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
+                  .format(self.total_post_count, self.error_count,
+                          self.downloaded_count, self.skipped_count))
+        else:
+            print("Exit.")
+            sys.exit()
+
     def prepare(self, results):
         """Prepare results for parsing and downloading"""
         self.total_post_count = len(results)
@@ -142,83 +171,62 @@ class Grabber(object):
                         post["is_blacklisted"] = True
                         self.total_post_count -= 1
 
-        print("Total results:", self.total_post_count)
-        if not self.quiet:
-            a = input("Do you want to continiue?\n")
-        else:
-            a = "yes"
-        if "n" not in a:
-            if not os.path.isdir(self.pics_dir):
-                os.mkdir(self.pics_dir)
-            os.chdir(self.pics_dir)
-            if self.search_method != "post":
-                if self.search_method == "tag":
-                    folder_name = self.query
-                elif self.search_method == "pool":
-                    folder_name = "pool:" + self.query
-
-                if not os.path.isdir(folder_name):
-                    os.mkdir(folder_name)
-                os.chdir(folder_name)
-
-            with ThreadPoolExecutor(max_workers=self.threads) as e:
-                e.map(self.parser, results)
-
-            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
-                  .format(self.total_post_count, self.error_count,
-                          self.downloaded_count, self.skipped_count))
-        else:
-            print("Exit.")
-            sys.exit()
+        self.start(results)
 
     def search(self):
         """Search and get results"""
-        if self.search_method == "tag":
-            query = self.query
-            if self.page == 1:
-                print("Search tag:", self.query)
-        elif self.search_method == "post":
-            query = "id:" + self.query
-            if self.page == 1:
-                print("Search post with id:", self.query)
-        elif self.search_method == "pool":
-            query = "pool:" + self.query
-            if self.page == 1:
-                print("Search pool with name/id:", self.query)
-        payload = {"tags": query, "page": self.page, "limit": self.post_limit}
+        def get_result():
+            """Getting results"""
+            if self.search_method == "tag":
+                query = self.query
+                if self.page == 1:
+                    print("Search tag:", self.query)
+            elif self.search_method == "post":
+                query = "id:" + self.query
+                if self.page == 1:
+                    print("Search post with id:", self.query)
+            elif self.search_method == "pool":
+                query = "pool:" + self.query
+                if self.page == 1:
+                    print("Search pool with name/id:", self.query)
+            prms = {"tags": query, "page": self.page, "limit": self.post_limit}
 
-        if (self.search_method == "tag" or self.search_method == "pool") and \
-           (self.page != 1 and not self.quiet):
-            print("Please wait, loading page", self.page)
+            if (self.search_method == "tag" or self.search_method == "pool") \
+               and (self.page != 1 and not self.quiet):
+                print("Please wait, loading page", self.page)
 
-        if self.login is not None and self.password is not None:
-            r = requests.get(self.board_url + "/posts.json", params=payload,
-                             auth=(self.login, self.password))
-        else:
-            r = requests.get(self.board_url + "/posts.json", params=payload)
-
-        if r.status_code == requests.codes.ok:
-            if "application/json" in r.headers["content-type"]:
-                result = r.json()
+            if self.login is not None and self.password is not None:
+                r = requests.get(self.board_url + "/posts.json", params=prms,
+                                 auth=(self.login, self.password))
             else:
-                print("There are no JSON, content type is:",
-                      r.headers["content-type"])
+                r = requests.get(self.board_url + "/posts.json", params=prms)
+            if r.status_code == requests.codes.ok:
+                if "application/json" in r.headers["content-type"]:
+                    result = r.json()
+                    post_count = len(result)
+                    return result, post_count
+                else:
+                    print("There are no JSON, content type is:",
+                          r.headers["content-type"])
+                    sys.exit(1)
+            else:
+                print("Get results failed, status code is:", r.status_code)
                 sys.exit(1)
-            post_count = len(result)
-            if not post_count and not self.total_result:
+
+        results = []
+        while True:
+            result, post_count = get_result()
+            if not post_count and not results:
                 print("Not found.")
-                sys.exit()
+                return False
             elif (not self.page_limit or self.page < self.page_limit) and \
-               post_count == self.post_limit:
-                self.total_result += result
+                    post_count == self.post_limit:
+                results += result
                 self.page += 1
-                self.search()
             else:
-                self.total_result += result
-                self.prepare(self.total_result)
-        else:
-            print("Get results failed, status code is:", r.status_code)
-            sys.exit(1)
+                results += result
+                self.prepare(results)
+                return False
 
 
 if __name__ == "__main__":
