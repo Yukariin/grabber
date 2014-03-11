@@ -22,13 +22,7 @@ class Grabber(object):
         self.board_url = "http://donmai.us"
         self.query = query.strip()
         self.search_method = search_method
-        self.login = None
-        self.password = None
-        self.page = 1
         self.page_limit = 0
-        self.post_limit = 200
-        self.threads = 10
-        self.blacklist = "scat comic hard_translated".split()
         self.total_post_count = 0
         self.download_count = 0
         self.downloaded_count = 0
@@ -128,7 +122,7 @@ class Grabber(object):
                     os.mkdir(folder_name)
                 os.chdir(folder_name)
 
-            with ThreadPoolExecutor(max_workers=self.threads) as e:
+            with ThreadPoolExecutor(max_workers=10) as e:
                 e.map(self.parser, results)
             print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
                   .format(self.total_post_count, self.error_count,
@@ -138,12 +132,14 @@ class Grabber(object):
             sys.exit()
 
     def prepare(self, results):
-        """Prepare results for parsing and downloading"""
+        """Prepare results for parsing"""
+        blacklist = "scat comic hard_translated".split()
+
         self.total_post_count = len(results)
-        if self.blacklist and self.search_method == "tag":
+        if blacklist and self.search_method == "tag":
             for tag in self.query.split():
-                if tag in self.blacklist:
-                    self.blacklist.remove(tag)
+                if tag in blacklist:
+                    blacklist.remove(tag)
         for post in results:
             if "file_url" not in post:
                 r = requests.get("{}/posts/{}".format(self.board_url,
@@ -160,12 +156,10 @@ class Grabber(object):
             if "md5" not in post:
                 post["md5"] = os.path.splitext(os.path.basename(
                     post["file_url"]))[0]
-            if "tag_string" not in post and "tags" in post:
-                post["tag_string"] = post.pop("tags")
 
             post["is_blacklisted"] = False
-            if self.blacklist and self.search_method == "tag":
-                for tag in self.blacklist:
+            if blacklist and self.search_method == "tag":
+                for tag in blacklist:
                     if tag in post["tag_string"] and \
                             not post["is_blacklisted"]:
                         post["is_blacklisted"] = True
@@ -173,31 +167,27 @@ class Grabber(object):
 
         self.start(results)
 
-    def search(self):
+    def search(self, login=None, password=None):
         """Search and get results"""
         def get_result():
             """Getting results"""
             if self.search_method == "tag":
                 query = self.query
-                if self.page == 1:
-                    print("Search tag:", self.query)
             elif self.search_method == "post":
                 query = "id:" + self.query
-                if self.page == 1:
-                    print("Search post with id:", self.query)
             elif self.search_method == "pool":
                 query = "pool:" + self.query
-                if self.page == 1:
-                    print("Search pool with name/id:", self.query)
-            prms = {"tags": query, "page": self.page, "limit": self.post_limit}
+            prms = {"tags": query, "page": page, "limit": post_limit}
 
+            if page == 1:
+                print("Search:", self.query)
             if (self.search_method == "tag" or self.search_method == "pool") \
-               and (self.page != 1 and not self.quiet):
-                print("Please wait, loading page", self.page)
+               and (page != 1 and not self.quiet):
+                print("Please wait, loading page", page)
 
-            if self.login is not None and self.password is not None:
+            if login is not None and password is not None:
                 r = requests.get(self.board_url + "/posts.json", params=prms,
-                                 auth=(self.login, self.password))
+                                 auth=(login, password))
             else:
                 r = requests.get(self.board_url + "/posts.json", params=prms)
             if r.status_code == requests.codes.ok:
@@ -213,20 +203,22 @@ class Grabber(object):
                 print("Get results failed, status code is:", r.status_code)
                 sys.exit(1)
 
+        page = 1
+        post_limit = 200
         results = []
-        while True:
+        result, post_count = get_result()
+
+        while (not self.page_limit or page < self.page_limit) and \
+                post_count == post_limit:
+            results += result
+            page += 1
             result, post_count = get_result()
-            if not post_count and not results:
-                print("Not found.")
-                return False
-            elif (not self.page_limit or self.page < self.page_limit) and \
-                    post_count == self.post_limit:
-                results += result
-                self.page += 1
-            else:
-                results += result
-                self.prepare(results)
-                return False
+
+        if not post_count and not results:
+            print("Not found.")
+        else:
+            results += result
+            self.prepare(results)
 
 
 if __name__ == "__main__":
@@ -252,15 +244,17 @@ if __name__ == "__main__":
     def start(query, method="tag"):
         """Creating object, change vars and start search"""
         grabber = Grabber(query, method)
-        if args.nick and args.password:
-            grabber.login, grabber.password = args.nick, args.password
         if args.limit:
             grabber.page_limit = args.limit
         if args.quiet:
             grabber.quiet = True
         if args.update or args.path:
             grabber.pics_dir = args.update or args.path
-        grabber.search()
+
+        if args.nick and args.password:
+            grabber.search(args.nick, args.password)
+        else:
+            grabber.search()
 
     if args.tag:
         start(args.tag)
