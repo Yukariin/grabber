@@ -39,7 +39,7 @@ class Grabber(object):
             self.query = self.query.replace("id:", "")
 
     def downloader(self, file_url, file_name, file_size, md5):
-        """Check and download files"""
+        """Check and download file"""
         def md5sum(file_name):
             """Get file md5"""
             with open(file_name, "rb") as file_to_check:
@@ -90,7 +90,7 @@ class Grabber(object):
             get(file_url, file_name)
 
     def parser(self, post):
-        """Parse post and get url, tags, etc"""
+        """Parse post to get url, tags, etc and start download"""
         file_url = self.board_url + post["file_url"]
         file_ext = post["file_ext"]
         md5 = post["md5"]
@@ -102,7 +102,7 @@ class Grabber(object):
             self.downloader(file_url, file_name, file_size, md5)
 
     def start(self, results):
-        """Create forder and start downloading"""
+        """Create folder and start parser"""
         print("Total results:", self.total_post_count)
         if not self.quiet:
             a = input("Do you want to continiue?\n")
@@ -144,11 +144,15 @@ class Grabber(object):
             if "file_url" not in post:
                 r = requests.get("{}/posts/{}".format(self.board_url,
                                                       post["id"]))
-                s = re.findall('/data/[0-9a-f]+.[a-z]+', r.text)
-                if s:
-                    post["file_url"] = s[0]
+                if r.status_code == requests.codes.ok:
+                    s = re.findall('/data/[0-9a-f]+.[a-z]+', r.text)
+                    if s:
+                        post["file_url"] = s[0]
+                    else:
+                        print("Failed get file url!")
+                        sys.exit(1)
                 else:
-                    print("Failed get file url!")
+                    print("Get page failed, status code is:", r.status_code)
                     sys.exit(1)
             if "file_ext" not in post:
                 post["file_ext"] = os.path.splitext(os.path.basename(
@@ -213,7 +217,6 @@ class Grabber(object):
             results += result
             page += 1
             result, post_count = get_result()
-
         if not post_count and not results:
             print("Not found.")
         else:
