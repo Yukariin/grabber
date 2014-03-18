@@ -11,8 +11,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 try:
     import requests
+    import xattr
 except ImportError:
-    print("Requests lib was not found!")
+    print("Requests or pyxattr lib was not found!")
     sys.exit(1)
 
 
@@ -89,6 +90,19 @@ class Grabber(object):
         else:
             get(file_url, file_name)
 
+    def tagging(self, file_name, tags, comment):
+        """Tagging the file"""
+        tag_blacklist = "tagme bad_id translated translation_request copyright_request".split()
+
+        if tag_blacklist:
+            for tag in tag_blacklist:
+                if tag in tags:
+                    tags = tags.replace(tag, "")
+        tags = ", ".join(tags.split())
+        
+        xattr.set(file_name, "user.tags", tags)
+        xattr.set(file_name, "user.comment", comment)
+
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
         file_url = self.board_url + post["file_url"]
@@ -97,9 +111,12 @@ class Grabber(object):
         file_size = post["file_size"]
         file_name = "{} - {}.{}".format("Donmai.us", post["id"],
                                         file_ext)
+        tags = "{} rating_{}".format(post["tag_string"], post["rating"])
+        comment = "{}/posts/{}".format(self.board_url, post["id"])
 
         if not post["is_blacklisted"]:
             self.downloader(file_url, file_name, file_size, md5)
+            self.tagging(file_name, tags, comment)
 
     def start(self, results):
         """Create folder and start parser"""
