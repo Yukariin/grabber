@@ -92,7 +92,7 @@ class Grabber(object):
 
     def tagging(self, file_name, tags, comment):
         """Tagging the file"""
-        tag_blacklist = "tagme bad_id translated translation_request copyright_request".split()
+        tag_blacklist = "tagme bad_id translated translation_request partially_translated check_translation poorly_translatedcopyright_request".split()
 
         if tag_blacklist:
             for tag in tag_blacklist:
