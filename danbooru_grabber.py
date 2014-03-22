@@ -105,13 +105,14 @@ class Grabber(object):
 
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
+        rating = {"s": "safe", "q": "questionable", "e": "explicit"}
         file_url = self.board_url + post["file_url"]
         file_ext = post["file_ext"]
         md5 = post["md5"]
         file_size = post["file_size"]
         file_name = "{} - {}.{}".format("Donmai.us", post["id"],
                                         file_ext)
-        tags = "{} rating_{}".format(post["tag_string"], post["rating"])
+        tags = "{} rating_{}".format(post["tag_string"], rating[post["rating"]])
         comment = "{}/posts/{}".format(self.board_url, post["id"])
 
         if not post["is_blacklisted"]:
