@@ -100,8 +100,10 @@ class Grabber(object):
                     tags = tags.replace(tag, "")
         tags = ", ".join(tags.split())
         
-        xattr.set(file_name, "user.tags", tags)
-        xattr.set(file_name, "user.comment", comment)
+        if xattr.get(file_name, "user.tags") != tags:
+            xattr.set(file_name, "user.tags", tags)
+        if xattr.get(file_name, "user.comment") != comment:
+            xattr.set(file_name, "user.comment", comment)
 
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
