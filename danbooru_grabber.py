@@ -92,18 +92,19 @@ class Grabber(object):
 
     def tagging(self, file_name, tags, comment):
         """Tagging the file"""
-        tag_blacklist = "tagme bad_id translated translation_request partially_translated check_translation poorly_translatedcopyright_request".split()
+        tag_blacklist = "tagme bad_id translated translation_request partially_translated check_translation poorly_translated copyright_request".split()
 
         if tag_blacklist:
             for tag in tag_blacklist:
                 if tag in tags:
                     tags = tags.replace(tag, "")
         tags = ", ".join(tags.split())
-        
-        if xattr.get(file_name, "user.tags") != tags:
-            xattr.set(file_name, "user.tags", tags)
-        if xattr.get(file_name, "user.comment") != comment:
-            xattr.set(file_name, "user.comment", comment)
+
+        x = xattr.xattr(file_name)
+        if ("user.tags" in x.keys() and x["user.tags"] != tags.encode()) or "user.tags" not in x.keys():
+            x["user.tags"] = tags.encode()
+        if ("user.comment" in x.keys() and x["user.comment"] != comment.encode()) or "user.comment" not in x.keys():
+            x["user.comment"] = comment.encode()
 
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
