@@ -101,10 +101,10 @@ class Grabber(object):
         tags = ", ".join(tags.split())
 
         x = xattr.xattr(file_name)
-        if ("user.tags" in x.keys() and x["user.tags"] != tags.encode()) or "user.tags" not in x.keys():
-            x["user.tags"] = tags.encode()
-        if ("user.comment" in x.keys() and x["user.comment"] != comment.encode()) or "user.comment" not in x.keys():
-            x["user.comment"] = comment.encode()
+        if ("user.xdg.tags" in x.keys() and x["user.xdg.tags"] != tags.encode()) or "user.xdg.tags" not in x.keys():
+            x["user.xdg.tags"] = tags.encode()
+        if ("user.xdg.comment" in x.keys() and x["user.xdg.comment"] != comment.encode()) or "user.xdg.comment" not in x.keys():
+            x["user.xdg.comment"] = comment.encode()
 
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
