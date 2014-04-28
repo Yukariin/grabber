@@ -18,9 +18,8 @@ except ImportError:
 
 class Grabber(object):
     """Main grabber class"""
-    def __init__(self, query, search_method):
+    def __init__(self, search_method):
         self.board_url = "http://donmai.us"
-        self.query = query.strip()
         self.search_method = search_method
         self.page_limit = 0
         self.total_post_count = 0
@@ -30,13 +29,6 @@ class Grabber(object):
         self.error_count = 0
         self.quiet = False
         self.pics_dir = os.path.expanduser("~") + "/Pictures"
-
-        if self.query.startswith("pool:") and self.search_method != "pool":
-            self.search_method = "pool"
-            self.query = self.query.replace("pool:", "")
-        elif self.query.startswith("id:") and self.search_method != "post":
-            self.search_method = "post"
-            self.query = self.query.replace("id:", "")
 
     def downloader(self, file_url, file_name, file_size, md5):
         """Check and download file"""
@@ -101,43 +93,15 @@ class Grabber(object):
         if not post["is_blacklisted"]:
             self.downloader(file_url, file_name, file_size, md5)
 
-    def start(self, results):
-        """Create folder and start parser"""
-        print("Total results:", self.total_post_count)
-        if not self.quiet:
-            a = input("Do you want to continiue?\n")
-        else:
-            a = "yes"
-        if "n" not in a:
-            if not os.path.isdir(self.pics_dir):
-                os.mkdir(self.pics_dir)
-            os.chdir(self.pics_dir)
-            if self.search_method != "post":
-                if self.search_method == "tag":
-                    folder_name = self.query
-                elif self.search_method == "pool":
-                    folder_name = "pool:" + self.query
+    
 
-                if not os.path.isdir(folder_name):
-                    os.mkdir(folder_name)
-                os.chdir(folder_name)
-
-            with ThreadPoolExecutor(max_workers=10) as e:
-                e.map(self.parser, results)
-            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
-                  .format(self.total_post_count, self.error_count,
-                          self.downloaded_count, self.skipped_count))
-        else:
-            print("Exit.")
-            sys.exit()
-
-    def prepare(self, results):
+    def prepare(self, query, results):
         """Prepare results for parsing"""
         blacklist = "scat comic hard_translated".split()
 
         self.total_post_count = len(results)
         if blacklist and self.search_method == "tag":
-            for tag in self.query.split():
+            for tag in query.split():
                 if tag in blacklist:
                     blacklist.remove(tag)
         for post in results:
@@ -169,22 +133,16 @@ class Grabber(object):
                         post["is_blacklisted"] = True
                         self.total_post_count -= 1
 
-        self.start(results)
-
-    def search(self, login=None, password=None):
+    def search(self, query, login=None, password=None):
         """Search and get results"""
-        def get_result():
+        def get_result(query):
             """Getting results"""
-            if self.search_method == "tag":
-                query = self.query
-            elif self.search_method == "post":
-                query = "id:" + self.query
+            if self.search_method == "post":
+                query = "id:" + query
             elif self.search_method == "pool":
-                query = "pool:" + self.query
+                query = "pool:" + query
             prms = {"tags": query, "page": page, "limit": post_limit}
 
-            if page == 1:
-                print("Search:", self.query)
             if (self.search_method == "tag" or self.search_method == "pool") \
                and (page != 1 and not self.quiet):
                 print("Please wait, loading page", page)
@@ -207,21 +165,64 @@ class Grabber(object):
                 print("Get results failed, status code is:", r.status_code)
                 sys.exit(1)
 
+        print("Search:", query)
         page = 1
         post_limit = 200
         results = []
-        result, post_count = get_result()
+        result, post_count = get_result(query)
 
         while (not self.page_limit or page < self.page_limit) and \
                 post_count == post_limit:
             results += result
             page += 1
-            result, post_count = get_result()
+            result, post_count = get_result(query)
         if not post_count and not results:
             print("Not found.")
+            sys.exit()
         else:
             results += result
-            self.prepare(results)
+            return results
+
+    def start(self, query):
+        """Create folder and start parser"""
+        query = query.strip()
+        if query.startswith("pool:") and self.search_method != "pool":
+            self.search_method = "pool"
+            query = query.replace("pool:", "")
+        elif query.startswith("id:") and self.search_method != "post":
+            self.search_method = "post"
+            query = query.replace("id:", "")
+
+        results = self.search(query)
+        self.prepare(query, results)
+        print("Total results:", self.total_post_count)
+        
+        if not self.quiet:
+            a = input("Do you want to continiue?\n")
+        else:
+            a = "yes"
+        if "n" not in a:
+            if not os.path.isdir(self.pics_dir):
+                os.mkdir(self.pics_dir)
+            os.chdir(self.pics_dir)
+            if self.search_method != "post":
+                if self.search_method == "tag":
+                    folder_name = query
+                elif self.search_method == "pool":
+                    folder_name = "pool:" + query
+
+                if not os.path.isdir(folder_name):
+                    os.mkdir(folder_name)
+                os.chdir(folder_name)
+
+            with ThreadPoolExecutor(max_workers=10) as e:
+                e.map(self.parser, results)
+            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
+                  .format(self.total_post_count, self.error_count,
+                          self.downloaded_count, self.skipped_count))
+        else:
+            print("Exit.")
+            sys.exit()
 
 
 if __name__ == "__main__":
@@ -246,7 +247,7 @@ if __name__ == "__main__":
 
     def start(query, method="tag"):
         """Creating object, change vars and start search"""
-        grabber = Grabber(query, method)
+        grabber = Grabber(method)
         if args.limit:
             grabber.page_limit = args.limit
         if args.quiet:
@@ -255,9 +256,9 @@ if __name__ == "__main__":
             grabber.pics_dir = args.update or args.path
 
         if args.nick and args.password:
-            grabber.search(args.nick, args.password)
+            grabber.start(query)
         else:
-            grabber.search()
+            grabber.start(query)
 
     if args.tag:
         start(args.tag)
@@ -282,7 +283,7 @@ if __name__ == "__main__":
                 print("--------------------------------")
                 start(name)
         else:
-            print("There no any folders found.")
+            print("There no any folder found.")
             sys.exit()
     elif not any(vars(args).values()):
         parser.print_help()
