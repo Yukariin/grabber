@@ -86,6 +86,7 @@ class Grabber(object):
     def tagging(self, file_name, tags, comment):
         """Tagging the file"""
         tag_blacklist = "tagme bad_id translated translation_request partially_translated check_translation poorly_translated copyright_request".split()
+        file_path = os.path.join(self.pics_dir, file_name)
 
         if tag_blacklist:
             for tag in tag_blacklist:
@@ -93,7 +94,7 @@ class Grabber(object):
                     tags = tags.replace(tag, "")
         tags = ", ".join(tags.split())
 
-        x = xattr.xattr(file_name)
+        x = xattr.xattr(file_path)
         if ("user.xdg.tags" in x.keys() and x["user.xdg.tags"] != tags.encode()) or "user.xdg.tags" not in x.keys():
             x["user.xdg.tags"] = tags.encode()
         if ("user.xdg.comment" in x.keys() and x["user.xdg.comment"] != comment.encode()) or "user.xdg.comment" not in x.keys():
