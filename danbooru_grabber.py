@@ -28,19 +28,20 @@ class Grabber(object):
         self.skipped_count = 0
         self.error_count = 0
         self.quiet = False
-        self.pics_dir = os.path.expanduser("~") + "/Pictures"
+        self.pics_dir = os.path.join(os.path.expanduser("~"), "Pictures")
 
     def downloader(self, file_url, file_name, file_size, md5):
         """Check and download file"""
-        def md5sum(file_name):
+        file_path = os.path.join(self.pics_dir, file_name)
+        def md5sum(file_path):
             """Get file md5"""
-            with open(file_name, "rb") as file_to_check:
+            with open(file_path, "rb") as file_to_check:
                 hasher = hashlib.md5()
                 for buf in iter(partial(file_to_check.read, 128), b""):
                     hasher.update(buf)
             return hasher.hexdigest()
 
-        def get(file_url, file_name):
+        def get(file_url, file_path):
             """Download file"""
             self.download_count += 1
             r = requests.get(file_url, stream=True)
@@ -50,7 +51,7 @@ class Grabber(object):
                       "({}%)".format(round(self.download_count /
                                            (self.total_post_count / 100))),
                       "downloading", file_name)
-                with open(file_name, "wb") as f:
+                with open(file_path, "wb") as f:
                     for block in r.iter_content(1024):
                         if block:
                             f.write(block)
@@ -64,9 +65,9 @@ class Grabber(object):
                       file_name, "downloading failed, status code is:",
                       r.status_code)
 
-        if os.path.isfile(file_name):
-            if os.path.getsize(file_name) == file_size and \
-               md5sum(file_name) == md5:
+        if os.path.isfile(file_path):
+            if os.path.getsize(file_path) == file_size and \
+               md5sum(file_path) == md5:
                 self.download_count += 1
                 self.skipped_count += 1
                 if not self.quiet:
@@ -76,10 +77,10 @@ class Grabber(object):
                                                (self.total_post_count / 100))),
                           "md5 match! Skipping download.")
             else:
-                os.remove(file_name)
-                get(file_url, file_name)
+                os.remove(file_path)
+                get(file_url, file_path)
         else:
-            get(file_url, file_name)
+            get(file_url, file_path)
 
     def parser(self, post):
         """Parse post to get url, tags, etc and start download"""
@@ -202,18 +203,12 @@ class Grabber(object):
         else:
             a = "yes"
         if "n" not in a:
+            if self.search_method == "tag":
+                self.pics_dir = os.path.join(self.pics_dir, query)
+            elif self.search_method == "pool":
+                self.pics_dir = os.path.join(self.pics_dir, "pool:" + query)
             if not os.path.isdir(self.pics_dir):
-                os.mkdir(self.pics_dir)
-            os.chdir(self.pics_dir)
-            if self.search_method != "post":
-                if self.search_method == "tag":
-                    folder_name = query
-                elif self.search_method == "pool":
-                    folder_name = "pool:" + query
-
-                if not os.path.isdir(folder_name):
-                    os.mkdir(folder_name)
-                os.chdir(folder_name)
+                os.makedirs(self.pics_dir)
 
             with ThreadPoolExecutor(max_workers=10) as e:
                 e.map(self.parser, results)
@@ -241,7 +236,7 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quiet", action="store_true",
                         help="quiet mode")
     parser.add_argument("-u", "--update", help="update downloaded collection",
-                        nargs="?", const=os.path.expanduser("~") + "/Pictures")
+                        nargs="?", const=os.path.join(os.path.expanduser("~"), "Pictures"))
     parser.add_argument("-d", "--path", help="set path to download")
     args = parser.parse_args()
 
@@ -254,7 +249,6 @@ if __name__ == "__main__":
             grabber.quiet = True
         if args.update or args.path:
             grabber.pics_dir = args.update or args.path
-
         if args.nick and args.password:
             grabber.start(query)
         else:
