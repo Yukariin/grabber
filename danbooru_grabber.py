@@ -227,7 +227,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--password", help="set pass for auth")
     parser.add_argument("-t", "--tag",
                         help="search tags (standart danbooru format)")
-    parser.add_argument("-i", "--post",
+    parser.add_argument("-i", "--post", type=int,
                         help="search post (by danbooru post id)")
     parser.add_argument("-o", "--pool",
                         help="search pool (by danbooru pool id or name)")
@@ -262,16 +262,12 @@ if __name__ == "__main__":
         start(args.pool, "pool")
     elif args.update:
         print("Updating!")
-        args.limit = 1
+        if not args.limit:
+            args.limit = 1
         args.quiet = True
 
-        if not args.update.endswith("/"):
-            pics_dir = args.update + "/"
-        else:
-            pics_dir = args.update
-
-        folder_list = sorted([name for name in os.listdir(pics_dir) if
-                             os.path.isdir(pics_dir + name)])
+        folder_list = sorted([name for name in os.listdir(args.update) if
+                             os.path.isdir(os.path.join(args.update, name))])
         if folder_list:
             for name in folder_list:
                 print("--------------------------------")
