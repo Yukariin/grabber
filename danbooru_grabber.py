@@ -92,7 +92,7 @@ class Grabber(object):
             for tag in tag_blacklist:
                 if tag in tags:
                     tags = tags.replace(tag, "")
-        tags = ", ".join(tags.split())
+        tags = ",".join(tags.split())
 
         x = xattr.xattr(file_path)
         if ("user.xdg.tags" in x.keys() and x["user.xdg.tags"] != tags.encode()) or "user.xdg.tags" not in x.keys():
