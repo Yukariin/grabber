@@ -13,7 +13,7 @@ try:
     import requests
     import xattr
 except ImportError:
-    print("Requests or pyxattr lib was not found!")
+    print("Requests or xattr libs was not found!")
     sys.exit(1)
 
 
@@ -95,9 +95,11 @@ class Grabber(object):
         tags = ",".join(tags.split())
 
         x = xattr.xattr(file_path)
-        if ("user.xdg.tags" in x.keys() and x["user.xdg.tags"] != tags.encode()) or "user.xdg.tags" not in x.keys():
+        if ("user.xdg.tags" in x.keys() and x["user.xdg.tags"] != tags.encode()) \
+            or "user.xdg.tags" not in x.keys():
             x["user.xdg.tags"] = tags.encode()
-        if ("user.xdg.comment" in x.keys() and x["user.xdg.comment"] != comment.encode()) or "user.xdg.comment" not in x.keys():
+        if ("user.xdg.comment" in x.keys() and x["user.xdg.comment"] != comment.encode()) \
+            or "user.xdg.comment" not in x.keys():
             x["user.xdg.comment"] = comment.encode()
 
     def parser(self, post):
@@ -115,8 +117,6 @@ class Grabber(object):
         if not post["is_blacklisted"]:
             self.downloader(file_url, file_name, file_size, md5)
             self.tagging(file_name, tags, comment)
-
-    
 
     def prepare(self, query, results):
         """Prepare results for parsing"""
@@ -139,7 +139,7 @@ class Grabber(object):
                         print("Failed get file url!")
                         sys.exit(1)
                 else:
-                    print("Get page failed, status code is:", r.status_code)
+                    print("Getting page failed, status code is:", r.status_code)
                     sys.exit(1)
             if "file_ext" not in post:
                 post["file_ext"] = os.path.splitext(os.path.basename(
@@ -201,7 +201,6 @@ class Grabber(object):
             result, post_count = get_result(query)
         if not post_count and not results:
             print("Not found.")
-            sys.exit()
         else:
             results += result
             return results
@@ -217,29 +216,31 @@ class Grabber(object):
             query = query.replace("id:", "")
 
         results = self.search(query)
-        self.prepare(query, results)
-        print("Total results:", self.total_post_count)
-        
-        if not self.quiet:
-            a = input("Do you want to continiue?\n")
-        else:
-            a = "yes"
-        if "n" not in a:
-            if self.search_method == "tag":
-                self.pics_dir = os.path.join(self.pics_dir, query)
-            elif self.search_method == "pool":
-                self.pics_dir = os.path.join(self.pics_dir, "pool:" + query)
-            if not os.path.isdir(self.pics_dir):
-                os.makedirs(self.pics_dir)
+        if results is not None:
+            self.prepare(query, results)
+            print("Total results:", self.total_post_count)
 
-            with ThreadPoolExecutor(max_workers=10) as e:
-                e.map(self.parser, results)
-            print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
-                  .format(self.total_post_count, self.error_count,
-                          self.downloaded_count, self.skipped_count))
-        else:
-            print("Exit.")
-            sys.exit()
+            if not self.quiet:
+                a = input("Do you want to continiue?\n")
+            else:
+                a = "yes"
+                if "n" not in a:
+                    if self.search_method == "tag":
+                        self.pics_dir = os.path.join(self.pics_dir, query)
+                    elif self.search_method == "pool":
+                        self.pics_dir = os.path.join(self.pics_dir,
+                                                     "pool:" + query)
+                        if not os.path.isdir(self.pics_dir):
+                            os.makedirs(self.pics_dir)
+
+                    with ThreadPoolExecutor(max_workers=10) as e:
+                        e.map(self.parser, results)
+                    print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
+                        .format(self.total_post_count, self.error_count,
+                              self.downloaded_count, self.skipped_count))
+                else:
+                    print("Exit.")
+                    sys.exit()
 
 
 if __name__ == "__main__":
@@ -249,7 +250,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--password", help="set pass for auth")
     parser.add_argument("-t", "--tag",
                         help="search tags (standart danbooru format)")
-    parser.add_argument("-i", "--post", type=int,
+    parser.add_argument("-i", "--post",
                         help="search post (by danbooru post id)")
     parser.add_argument("-o", "--pool",
                         help="search pool (by danbooru pool id or name)")
@@ -258,7 +259,8 @@ if __name__ == "__main__":
     parser.add_argument("-q", "--quiet", action="store_true",
                         help="quiet mode")
     parser.add_argument("-u", "--update", help="update downloaded collection",
-                        nargs="?", const=os.path.join(os.path.expanduser("~"), "Pictures"))
+                        nargs="?", const=os.path.join(os.path.expanduser("~"),
+                        "Pictures"))
     parser.add_argument("-d", "--path", help="set path to download")
     args = parser.parse_args()
 
