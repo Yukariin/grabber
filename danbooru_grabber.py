@@ -224,23 +224,23 @@ class Grabber(object):
                 a = input("Do you want to continiue?\n")
             else:
                 a = "yes"
-                if "n" not in a:
-                    if self.search_method == "tag":
-                        self.pics_dir = os.path.join(self.pics_dir, query)
-                    elif self.search_method == "pool":
-                        self.pics_dir = os.path.join(self.pics_dir,
-                                                     "pool:" + query)
-                        if not os.path.isdir(self.pics_dir):
-                            os.makedirs(self.pics_dir)
+            if "n" not in a:
+                if self.search_method == "tag":
+                    self.pics_dir = os.path.join(self.pics_dir, query)
+                elif self.search_method == "pool":
+                    self.pics_dir = os.path.join(self.pics_dir,
+                                                 "pool:" + query)
+                if not os.path.isdir(self.pics_dir):
+                    os.makedirs(self.pics_dir)
 
-                    with ThreadPoolExecutor(max_workers=10) as e:
-                        e.map(self.parser, results)
-                    print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
-                        .format(self.total_post_count, self.error_count,
-                              self.downloaded_count, self.skipped_count))
-                else:
-                    print("Exit.")
-                    sys.exit()
+                with ThreadPoolExecutor(max_workers=10) as e:
+                    e.map(self.parser, results)
+                print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
+                    .format(self.total_post_count, self.error_count,
+                          self.downloaded_count, self.skipped_count))
+            else:
+                print("Exit.")
+                sys.exit()
 
 
 if __name__ == "__main__":
