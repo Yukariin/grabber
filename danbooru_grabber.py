@@ -20,7 +20,7 @@ except ImportError:
 class Grabber(object):
     """Main grabber class"""
     def __init__(self, search_method):
-        self.board_url = "http://donmai.us"
+        self.board_url = "https://danbooru.donmai.us"
         self.search_method = search_method
         self.page_limit = 0
         self.total_post_count = 0
