@@ -19,9 +19,8 @@ except ImportError:
 
 class Grabber(object):
     """Main grabber class"""
-    def __init__(self, search_method):
+    def __init__(self):
         self.board_url = "https://danbooru.donmai.us"
-        self.search_method = search_method
         self.page_limit = 0
         self.total_post_count = 0
         self.download_count = 0
@@ -114,20 +113,28 @@ class Grabber(object):
         tags = "{} rating_{}".format(post["tag_string"], rating[post["rating"]])
         comment = "{}/posts/{}".format(self.board_url, post["id"])
 
-        if not post["is_blacklisted"]:
-            self.downloader(file_url, file_name, file_size, md5)
-            self.tagging(file_name, tags, comment)
+        self.downloader(file_url, file_name, file_size, md5)
+        self.tagging(file_name, tags, comment)
 
-    def prepare(self, query, results):
+    def prepare_result(self, query, method, results):
         """Prepare results for parsing"""
-        blacklist = "scat comic hard_translated".split()
 
-        self.total_post_count = len(results)
-        if blacklist and self.search_method == "tag":
+        print("Preparing results")
+        blacklist = "scat comic hard_translated".split()
+        if blacklist and method == "tag":
             for tag in query.split():
                 if tag in blacklist:
                     blacklist.remove(tag)
+
         for post in results:
+            if blacklist and method == "tag":
+                regexp = '(\W|^)(%s)(\W|$)' % "|".join(blacklist)
+                tags = post["tag_string"]
+                blacklisted = re.search(regexp, tags)
+                if blacklisted is not None:
+                    results.remove(post)
+                    continue
+
             if "file_url" not in post:
                 r = requests.get("{}/posts/{}".format(self.board_url,
                                                       post["id"]))
@@ -139,7 +146,7 @@ class Grabber(object):
                         print("Failed get file url!")
                         sys.exit(1)
                 else:
-                    print("Getting page failed, status code is:", r.status_code)
+                    print("Getting image url failed, status code is:", r.status_code)
                     sys.exit(1)
             if "file_ext" not in post:
                 post["file_ext"] = os.path.splitext(os.path.basename(
@@ -148,99 +155,108 @@ class Grabber(object):
                 post["md5"] = os.path.splitext(os.path.basename(
                     post["file_url"]))[0]
 
-            post["is_blacklisted"] = False
-            if blacklist and self.search_method == "tag":
-                for tag in blacklist:
-                    if tag in post["tag_string"] and \
-                            not post["is_blacklisted"]:
-                        post["is_blacklisted"] = True
-                        self.total_post_count -= 1
+        self.total_post_count = len(results)
 
-    def search(self, query, login=None, password=None):
-        """Search and get results"""
-        def get_result(query):
-            """Getting results"""
-            if self.search_method == "post":
-                query = "id:" + query
-            elif self.search_method == "pool":
-                query = "pool:" + query
-            prms = {"tags": query, "page": page, "limit": post_limit}
+    def get_result(self, query, page, post_limit, login=None, password=None):
+        """Getting results"""
+        params = {"tags": query, "page": page, "limit": post_limit}
 
-            if (self.search_method == "tag" or self.search_method == "pool") \
-               and (page != 1 and not self.quiet):
-                print("Please wait, loading page", page)
+        if page != 1 and not self.quiet:
+            print("Please wait, loading page", page)
 
-            if login is not None and password is not None:
-                r = requests.get(self.board_url + "/posts.json", params=prms,
-                                 auth=(login, password))
+        if login is not None and password is not None:
+            r = requests.get(self.board_url + "/posts.json", params=params,
+                             auth=(login, password))
+        else:
+            r = requests.get(self.board_url + "/posts.json", params=params)
+
+        if r.status_code == requests.codes.ok:
+            if "application/json" in r.headers["content-type"]:
+                result = r.json()
+                return result
             else:
-                r = requests.get(self.board_url + "/posts.json", params=prms)
-            if r.status_code == requests.codes.ok:
-                if "application/json" in r.headers["content-type"]:
-                    result = r.json()
-                    post_count = len(result)
-                    return result, post_count
-                else:
-                    print("There are no JSON, content type is:",
-                          r.headers["content-type"])
-                    sys.exit(1)
-            else:
-                print("Get results failed, status code is:", r.status_code)
+                print("There are no JSON, content type is:",
+                      r.headers["content-type"])
                 sys.exit(1)
+        else:
+            print("Get results failed, status code is:", r.status_code)
+            sys.exit(1)
+
+    def search(self, query, method, login=None, password=None):
+        """Search and get results"""
 
         print("Search:", query)
+
+        query = self.parse_query(query, method)
         page = 1
         post_limit = 200
         results = []
-        result, post_count = get_result(query)
+        result = self.get_result(query, page, post_limit)
+        post_count = len(result)
 
         while (not self.page_limit or page < self.page_limit) and \
                 post_count == post_limit:
             results += result
             page += 1
-            result, post_count = get_result(query)
+            result = self.get_result(query, page, post_limit)
+            post_count = len(result)
+
         if not post_count and not results:
             print("Not found.")
         else:
             results += result
-            return results
 
-    def start(self, query):
-        """Create folder and start parser"""
+            if results is not None:
+                all_r = len(results)
+                self.prepare_result(query, method, results)
+                print("Total results: %d (%d)" % (self.total_post_count, all_r))
+
+                if not self.quiet:
+                    a = input("Do you want to continue?\n")
+                else:
+                    a = "yes"
+                if "n" not in a:
+                    if method == "tag":
+                        self.pics_dir = os.path.join(self.pics_dir, query)
+                    elif method == "pool":
+                        self.pics_dir = os.path.join(self.pics_dir,
+                                                     "pool:" + query)
+                    if not os.path.isdir(self.pics_dir):
+                        os.makedirs(self.pics_dir)
+
+                    print("Start downloading")
+                    with ThreadPoolExecutor(max_workers=10) as e:
+                        e.map(self.parser, results)
+                    print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
+                          .format(self.total_post_count, self.error_count,
+                                  self.downloaded_count, self.skipped_count))
+                else:
+                    print("Exit.")
+                    sys.exit()
+
+    def parse_query(self, query, method):
         query = query.strip()
-        if query.startswith("pool:") and self.search_method != "pool":
-            self.search_method = "pool"
+        if method == "post":
+            query = "id:" + query
+        elif query.startswith("pool:") and method != "pool":
+            method = "pool"
             query = query.replace("pool:", "")
-        elif query.startswith("id:") and self.search_method != "post":
-            self.search_method = "post"
+        elif query.startswith("id:") and method != "post":
+            method = "post"
             query = query.replace("id:", "")
 
-        results = self.search(query)
-        if results is not None:
-            self.prepare(query, results)
-            print("Total results:", self.total_post_count)
+        query_tags = query.split(" ")
+        a_tags = []
+        b_tags = []
+        if len(query_tags) > 2:
+            query = " ".join(query_tags[:2])
+            for tag in query_tags[2:]:
+                if tag.startswith("-"):
+                    b_tags.append(tag.replace('-', ''))
+                else:
+                    a_tags.append(tag)
 
-            if not self.quiet:
-                a = input("Do you want to continiue?\n")
-            else:
-                a = "yes"
-            if "n" not in a:
-                if self.search_method == "tag":
-                    self.pics_dir = os.path.join(self.pics_dir, query)
-                elif self.search_method == "pool":
-                    self.pics_dir = os.path.join(self.pics_dir,
-                                                 "pool:" + query)
-                if not os.path.isdir(self.pics_dir):
-                    os.makedirs(self.pics_dir)
-
-                with ThreadPoolExecutor(max_workers=10) as e:
-                    e.map(self.parser, results)
-                print("Done! TTL: {}, ERR: {}, OK: {}, SKP: {}"
-                    .format(self.total_post_count, self.error_count,
-                          self.downloaded_count, self.skipped_count))
-            else:
-                print("Exit.")
-                sys.exit()
+        return query
 
 
 if __name__ == "__main__":
@@ -266,7 +282,7 @@ if __name__ == "__main__":
 
     def start(query, method="tag"):
         """Creating object, change vars and start search"""
-        grabber = Grabber(method)
+        grabber = Grabber()
         if args.limit:
             grabber.page_limit = args.limit
         if args.quiet:
@@ -274,9 +290,9 @@ if __name__ == "__main__":
         if args.update or args.path:
             grabber.pics_dir = args.update or args.path
         if args.nick and args.password:
-            grabber.start(query)
+            grabber.search(query, method)
         else:
-            grabber.start(query)
+            grabber.search(query, method)
 
     if args.tag:
         start(args.tag)
